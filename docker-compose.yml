@@ -1,33 +1,86 @@
 version: '3.8'
 
+# Docker Compose para produção
+# Uso: docker-compose up --build
+# 
+# A aplicação será construída dentro do container usando o Dockerfile
+# Ambos os serviços (api e db) estão na mesma rede Docker para comunicação
+# O build da aplicação acontece no stage 'build' e é copiado para 'production'
+
 services:
   # 1. Serviço do Banco de Dados PostgreSQL
   db:
     image: postgres:14-alpine
+    container_name: weightlogx_db
     restart: always
     environment:
-      POSTGRES_USER: user_weightlogx
-      POSTGRES_PASSWORD: password_segura
-      POSTGRES_DB: weightlogx_db
+      POSTGRES_USER: ${DATABASE_USER:-user_weightlogx}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-password_segura}
+      POSTGRES_DB: ${DATABASE_NAME:-weightlogx_db}
     ports:
-      - "5433:5432"
+      - "${DATABASE_PORT:-5433}:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./data/postgres:/var/lib/postgresql/data
+    networks:
+      - weightlogx_network
+    healthcheck:
+      # Especifica o banco de dados para evitar erro "database user_weightlogx does not exist"
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-user_weightlogx} -d ${DATABASE_NAME:-weightlogx_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  # 2. Serviço da API Node.js/NestJS (opcional - para desenvolvimento, rode localmente)
-  # api:
-  #   build: . # Onde o Dockerfile está (Pasta raiz do projeto)
-  #   ports:
-  #     - "3000:3000"
-  #   depends_on:
-  #     - db
-  #   environment:
-  #     DATABASE_URL: postgres://user_weightlogx:password_segura@db:5432/weightlogx_db
-  #     # Outras variáveis (JWT_SECRET, S3_KEY, etc.)
-  #   volumes:
-  #     - .:/usr/src/app
-  #     - /usr/src/app/node_modules
-  #   command: npm run start:dev # Ou npm start para produção
+  # 2. Serviço da API Node.js/NestJS
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production  # Usar stage de produção com build completo
+    container_name: weightlogx_api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-3000}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Database - usando o nome do serviço 'db' para comunicação na mesma rede Docker
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_USER: ${DATABASE_USER:-user_weightlogx}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-password_segura}
+      DATABASE_NAME: ${DATABASE_NAME:-weightlogx_db}
+      DATABASE_SSL: ${DATABASE_SSL:-false}
+      # Application
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3000
+      # JWT
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      # CORS
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      # Upload
+      UPLOAD_DEST: ./uploads
+      MAX_FILE_SIZE: ${MAX_FILE_SIZE:-5242880}
+    volumes:
+      # Volume para uploads persistente na raiz da aplicação
+      - ./uploads:/app/uploads
+      # Volume para i18n (caso precise de atualizações sem rebuild)
+      - ./src/i18n:/app/src/i18n
+    networks:
+      - weightlogx_network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 3s
+      start_period: 40s
+      retries: 3
+
+networks:
+  # Rede compartilhada entre api e db para comunicação interna
+  # Os serviços podem se comunicar usando o nome do serviço (ex: db:5432)
+  weightlogx_network:
+    driver: bridge
 
 volumes:
   postgres_data:

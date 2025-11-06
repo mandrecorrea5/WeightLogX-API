@@ -8,6 +8,7 @@ import { WorkoutExerciseEntity } from '../workouts/entities/workout-exercise.ent
 import { SeriesConfigEntity } from '../workouts/entities/series-config.entity';
 import { PrResponseDto } from './dto/pr-response.dto';
 import { PrListResponseDto } from './dto/pr-list-response.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class PrsService {
@@ -16,7 +17,12 @@ export class PrsService {
     private readonly prRepository: Repository<PersonalRecordEntity>,
     @InjectRepository(WorkoutEntity)
     private readonly workoutRepository: Repository<WorkoutEntity>,
+    @InjectRepository(WorkoutExerciseEntity)
+    private readonly workoutExerciseRepository: Repository<WorkoutExerciseEntity>,
+    @InjectRepository(SeriesConfigEntity)
+    private readonly seriesConfigRepository: Repository<SeriesConfigEntity>,
     private readonly i18n: I18nService,
+    private readonly notificationsService: NotificationsService,
   ) { }
 
   /**
@@ -68,12 +74,14 @@ export class PrsService {
 
       // Se não existe PR ou o novo peso é maior, criar/atualizar PR
       if (!existingPR || maxWeight > Number(existingPR.maxWeight)) {
+        let createdOrUpdated = false;
         if (existingPR && maxWeight > Number(existingPR.maxWeight)) {
           // Atualizar PR existente apenas se o novo peso for maior
           existingPR.maxWeight = maxWeight;
           existingPR.workoutId = workoutId;
           existingPR.date = workout.date;
           await this.prRepository.save(existingPR);
+          createdOrUpdated = true;
         } else if (!existingPR) {
           // Criar novo PR
           const newPR = this.prRepository.create({
@@ -84,6 +92,25 @@ export class PrsService {
             date: workout.date,
           });
           await this.prRepository.save(newPR);
+          createdOrUpdated = true;
+        }
+
+        // Enviar notificação
+        if (createdOrUpdated) {
+          try {
+            await this.notificationsService.sendToUser(userId, {
+              type: 'new_pr',
+              title: 'Novo Recorde Pessoal! 🎉',
+              body: `Você bateu um novo PR em ${exercise.name}: ${maxWeight}kg`,
+              data: {
+                exerciseId: exercise.exerciseId,
+                workoutId,
+                maxWeight,
+              },
+            });
+          } catch (e) {
+            // Ignorar falha de notificação
+          }
         }
       }
     }

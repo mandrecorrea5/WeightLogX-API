@@ -3,7 +3,8 @@
     "register": {
       "success": "Account created successfully",
       "emailExists": "Email already registered",
-      "invalidData": "Invalid data"
+      "invalidData": "Invalid data",
+      "roleNotFound": "Default role not found in system"
     },
     "login": {
       "invalidCredentials": "Invalid credentials",
@@ -37,6 +38,9 @@
       "removed": "Image removed successfully",
       "invalidFormat": "Invalid image format",
       "invalidSize": "Invalid image size"
+    },
+    "role": {
+      "notFound": "Role not found"
     }
   },
   "workouts": {
@@ -57,6 +61,35 @@
   "reports": {
     "exerciseIdRequired": "Exercise ID is required when type is 'exercicio'",
     "generated": "Report generated successfully"
+  },
+  "exercises": {
+    "create": {
+      "success": "Exercise created successfully",
+      "alreadyExists": "Exercise with this name already exists"
+    },
+    "update": {
+      "success": "Exercise updated successfully",
+      "nameConflict": "An exercise with this name already exists"
+    },
+    "delete": {
+      "success": "Exercise removed successfully"
+    },
+    "notFound": "Exercise not found"
+  },
+  "trainingCenters": {
+    "create": {
+      "success": "Training center created successfully",
+      "alreadyExists": "Training center with this name already exists"
+    },
+    "update": {
+      "success": "Training center updated successfully",
+      "nameConflict": "A training center with this name already exists"
+    },
+    "delete": {
+      "success": "Training center removed successfully",
+      "hasUsers": "Cannot remove training center with associated users"
+    },
+    "notFound": "Training center not found"
   },
   "exercise": {
     "snatch": "Snatch",
@@ -79,6 +112,7 @@
     "maxLength": "Must be at most {{max}} characters",
     "min": "Minimum value is {{min}}",
     "max": "Maximum value is {{max}}",
+    "limit": "Limit must be between 1 and 100",
     "dateFormat": "Invalid date format (dd/MM/yyyy)",
     "phoneFormat": "Invalid phone format ((XX) XXXXX-XXXX)",
     "password": {

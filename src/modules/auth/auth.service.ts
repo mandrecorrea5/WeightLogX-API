@@ -13,6 +13,7 @@ import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import { I18nService } from 'nestjs-i18n';
 import { UserEntity } from '../../database/entities/user.entity';
+import { RoleEntity } from '../../database/entities/role.entity';
 import { PasswordResetTokenEntity } from './entities/password-reset-token.entity';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -29,6 +30,8 @@ export class AuthService {
   constructor(
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
+    @InjectRepository(RoleEntity)
+    private readonly roleRepository: Repository<RoleEntity>,
     @InjectRepository(PasswordResetTokenEntity)
     private readonly passwordResetTokenRepository: Repository<PasswordResetTokenEntity>,
     private readonly jwtService: JwtService,
@@ -50,6 +53,7 @@ export class AuthService {
     // Check if email already exists
     const existingUser = await this.userRepository.findOne({
       where: { email: registerDto.email.toLowerCase() },
+      relations: ['role'],
     });
 
     if (existingUser) {
@@ -61,11 +65,23 @@ export class AuthService {
     // Hash password
     const passwordHash = await bcrypt.hash(registerDto.password, 10);
 
-    // Create user
+    // Get default 'atleta' role
+    const defaultRole = await this.roleRepository.findOne({
+      where: { name: 'atleta' },
+    });
+
+    if (!defaultRole) {
+      throw new BadRequestException(
+        await this.i18n.translate('auth.register.roleNotFound', { lang: locale }),
+      );
+    }
+
+    // Create user (default role: atleta)
     const user = this.userRepository.create({
       email: registerDto.email.toLowerCase(),
       fullName: registerDto.fullName,
       passwordHash,
+      roleId: defaultRole.id,
     });
 
     await this.userRepository.save(user);
@@ -90,6 +106,7 @@ export class AuthService {
     // Find user by email
     const user = await this.userRepository.findOne({
       where: { email: loginDto.email.toLowerCase() },
+      relations: ['role'],
     });
 
     if (!user) {
@@ -125,6 +142,7 @@ export class AuthService {
   ): Promise<{ message: string; token?: string }> {
     const user = await this.userRepository.findOne({
       where: { email: forgotPasswordDto.email.toLowerCase() },
+      relations: ['role'],
     });
 
     if (!user) {
@@ -218,6 +236,7 @@ export class AuthService {
     // Get user
     const user = await this.userRepository.findOne({
       where: { id: resetToken.userId },
+      relations: ['role'],
     });
 
     if (!user) {

@@ -46,6 +46,10 @@ lerna-debug.log*
 .temp
 .tmp
 
+# Docker volumes (dados do PostgreSQL)
+/data
+/logs
+
 # Runtime data
 pids
 *.pid
@@ -54,3 +58,6 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Uploads directory (será mapeado como volume)
+/uploads

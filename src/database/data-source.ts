@@ -18,8 +18,15 @@ export const dataSourceOptions: DataSourceOptions = {
   ],
   migrations: [path.join(__dirname, './migrations/**/*{.ts,.js}')],
   synchronize: false, // Never use synchronize in production
-  logging: process.env.NODE_ENV === 'development',
-  ssl: process.env.DATABASE_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  // Only log queries in development and if explicitly enabled
+  logging: process.env.NODE_ENV === 'development' && process.env.DB_LOGGING === 'true',
+  // SSL configuration - rejectUnauthorized should be true in production
+  ssl:
+    process.env.DATABASE_SSL === 'true'
+      ? {
+        rejectUnauthorized: process.env.NODE_ENV === 'production',
+      }
+      : false,
 };
 
 const dataSource = new DataSource(dataSourceOptions);

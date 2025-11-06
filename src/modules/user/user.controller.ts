@@ -5,6 +5,7 @@ import {
   Post,
   Delete,
   Body,
+  Param,
   UseInterceptors,
   UploadedFile,
   HttpCode,
@@ -15,10 +16,16 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth, ApiConsumes
 import { FileInterceptor } from '@nestjs/platform-express';
 import { I18nLang } from 'nestjs-i18n';
 import { UserService } from './user.service';
+import { PermissionsService } from './services/permissions.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { ProfileResponseDto } from './dto/profile-response.dto';
 import { UploadImageResponseDto } from './dto/upload-image-response.dto';
+import { PermissionsResponseDto } from './dto/permissions-response.dto';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { UseGuards } from '@nestjs/common';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserEntity } from '../../database/entities/user.entity';
 import { ImageValidationPipe } from '../../common/pipes/image-validation.pipe';
@@ -35,6 +42,7 @@ import { randomUUID } from 'crypto';
 export class UserController {
   constructor(
     private readonly userService: UserService,
+    private readonly permissionsService: PermissionsService,
     private readonly configService: ConfigService,
     private readonly i18n: I18nService,
   ) { }
@@ -197,6 +205,72 @@ export class UserController {
     }
 
     return this.userService.deleteProfileImage(user.id, locale);
+  }
+
+  @Get('permissions')
+  @ApiOperation({ summary: 'Retorna as permissões do usuário logado' })
+  @ApiResponse({
+    status: 200,
+    description: 'Permissões do usuário',
+    type: PermissionsResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Não autenticado' })
+  async getPermissions(
+    @CurrentUser() user: UserEntity,
+  ): Promise<PermissionsResponseDto> {
+    const roleName = user.role?.name || 'atleta';
+    const permissions = this.permissionsService.getPermissionsByRole(roleName);
+    return {
+      role: roleName,
+      permissions,
+    };
+  }
+
+  @Put('users/:userId/role')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  @ApiOperation({ summary: 'Atualiza a role de um usuário (apenas admin)' })
+  @ApiBody({ type: UpdateUserRoleDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Role atualizada com sucesso',
+    type: ProfileResponseDto,
+  })
+  @ApiResponse({ status: 401, description: 'Não autenticado' })
+  @ApiResponse({ status: 403, description: 'Acesso negado (apenas admin)' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
+  async updateUserRole(
+    @Param('userId') userId: string,
+    @Body() updateUserRoleDto: UpdateUserRoleDto,
+    @I18nLang() locale: string,
+  ): Promise<ProfileResponseDto> {
+    return this.userService.updateUserRole(userId, updateUserRoleDto.role, locale);
+  }
+
+  @Put('users/:userId/trainer')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  @ApiOperation({ summary: 'Define o treinador de um atleta (apenas admin)' })
+  @ApiBody({ schema: { type: 'object', properties: { trainerId: { type: 'string', format: 'uuid' } }, required: ['trainerId'] } })
+  @ApiResponse({ status: 200, description: 'Vínculo atualizado', type: ProfileResponseDto })
+  async setTrainer(
+    @Param('userId') userId: string,
+    @Body('trainerId') trainerId: string,
+    @I18nLang() locale: string,
+  ): Promise<ProfileResponseDto> {
+    return this.userService.setTrainer(userId, trainerId, locale);
+  }
+
+  @Delete('users/:userId/trainer')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  @ApiOperation({ summary: 'Remove o treinador de um atleta (apenas admin)' })
+  @ApiResponse({ status: 200, description: 'Vínculo removido', type: ProfileResponseDto })
+  async removeTrainer(
+    @Param('userId') userId: string,
+    @I18nLang() locale: string,
+  ): Promise<ProfileResponseDto> {
+    return this.userService.removeTrainer(userId, locale);
   }
 }
 

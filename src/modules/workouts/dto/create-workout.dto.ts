@@ -3,8 +3,6 @@ import {
   IsDateString,
   IsString,
   IsNumber,
-  IsBoolean,
-  IsOptional,
   ValidateNested,
   ArrayMinSize,
   Min,
@@ -83,15 +81,6 @@ export class ExerciseConfigDto {
   })
   @IsString()
   abbreviation: string;
-
-  @ApiProperty({
-    description: 'Se é exercício conjugado',
-    example: false,
-    required: false,
-  })
-  @IsBoolean()
-  @IsOptional()
-  isConjugated?: boolean;
 
   @ApiProperty({
     description: 'Configuração de séries do exercício',

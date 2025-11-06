@@ -8,6 +8,7 @@ import { UserService } from './user.service';
 import { UserEntity } from '../../database/entities/user.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { RoleEntity } from '../../database/entities/role.entity';
 
 // Mock bcrypt module
 jest.mock('bcrypt');
@@ -261,4 +262,69 @@ describe('UserService', () => {
     });
   });
 });
+
+describe('UserService (trainer linkage)', () => {
+  let service: UserService;
+  let userRepo: jest.Mocked<Repository<UserEntity>>;
+  let roleRepo: jest.Mocked<Repository<RoleEntity>>;
+  let i18n: jest.Mocked<I18nService>;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        UserService,
+        { provide: getRepositoryToken(UserEntity), useValue: createRepoMock<UserEntity>() },
+        { provide: getRepositoryToken(RoleEntity), useValue: createRepoMock<RoleEntity>() },
+        { provide: I18nService, useValue: { translate: jest.fn().mockResolvedValue('msg') } },
+      ],
+    }).compile();
+
+    service = module.get<UserService>(UserService);
+    userRepo = module.get(getRepositoryToken(UserEntity));
+    roleRepo = module.get(getRepositoryToken(RoleEntity));
+    i18n = module.get(I18nService as any);
+  });
+
+  it('setTrainer should set trainerId when both users exist', async () => {
+    const athlete: Partial<UserEntity> = { id: 'athlete-1', fullName: 'Athlete', role: { name: 'atleta' } as any };
+    const trainer: Partial<UserEntity> = { id: 'trainer-1', fullName: 'Trainer', role: { name: 'treinador' } as any };
+
+    userRepo.findOne
+      .mockResolvedValueOnce(athlete as UserEntity) // athlete
+      .mockResolvedValueOnce(trainer as UserEntity) // trainer
+      .mockResolvedValueOnce({ ...(athlete as any), trainerId: 'trainer-1' } as UserEntity); // reloaded
+
+    userRepo.save.mockResolvedValue(athlete as UserEntity);
+
+    const resp = await service.setTrainer('athlete-1', 'trainer-1');
+    expect(userRepo.save).toHaveBeenCalledWith(expect.objectContaining({ trainerId: 'trainer-1' }));
+    expect(resp).toHaveProperty('id', 'athlete-1');
+  });
+
+  it('removeTrainer should null trainerId', async () => {
+    const athlete: Partial<UserEntity> = { id: 'athlete-1', fullName: 'Athlete', role: { name: 'atleta' } as any, trainerId: 'trainer-1' };
+
+    userRepo.findOne
+      .mockResolvedValueOnce(athlete as UserEntity) // athlete
+      .mockResolvedValueOnce({ ...(athlete as any), trainerId: null } as UserEntity); // reloaded
+
+    userRepo.save.mockResolvedValue(athlete as UserEntity);
+
+    const resp = await service.removeTrainer('athlete-1');
+    expect(userRepo.save).toHaveBeenCalledWith(expect.objectContaining({ trainerId: null }));
+    expect(resp).toHaveProperty('id', 'athlete-1');
+  });
+});
+
+function createRepoMock<T>() {
+  return {
+    findOne: jest.fn(),
+    save: jest.fn(),
+    create: jest.fn(),
+    delete: jest.fn(),
+    count: jest.fn(),
+    findAndCount: jest.fn(),
+    createQueryBuilder: jest.fn(),
+  } as any;
+}
 

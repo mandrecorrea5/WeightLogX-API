@@ -63,11 +63,12 @@ export class ExerciseDetailsDto {
   abbreviation: string;
 
   @ApiProperty({
-    description: 'Se é exercício conjugado',
+    description: 'Se é exercício conjugado (dois exercícios juntos) - apenas quando houver agrupamento',
     example: false,
+    required: false,
   })
   @IsBoolean()
-  isConjugated: boolean;
+  isConjugated?: boolean;
 
   @ApiProperty({
     description: 'Configuração de séries',

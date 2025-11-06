@@ -19,6 +19,7 @@ import { WorkoutListResponseDto, PaginationDto } from './dto/workout-list-respon
 import { WorkoutDetailsResponseDto } from './dto/workout-details-response.dto';
 import { SendToTrainerResponseDto } from './dto/send-to-trainer-response.dto';
 import { PrsService } from '../prs/prs.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class WorkoutsService {
@@ -32,6 +33,7 @@ export class WorkoutsService {
     private readonly i18n: I18nService,
     @Inject(forwardRef(() => PrsService))
     private readonly prsService: PrsService,
+    private readonly notificationsService: NotificationsService,
   ) { }
 
   async create(
@@ -106,7 +108,7 @@ export class WorkoutsService {
         exerciseId: exerciseDto.exerciseId,
         name: exerciseDto.name,
         abbreviation: exerciseDto.abbreviation,
-        isConjugated: exerciseDto.isConjugated || false,
+        isConjugated: false, // Por padrão false, será definido quando houver agrupamento
       });
 
       const seriesConfigs: SeriesConfigEntity[] = [];
@@ -161,6 +163,24 @@ export class WorkoutsService {
     endDate?: string,
     locale: string = 'pt-BR',
   ): Promise<WorkoutListResponseDto> {
+    // Validate input parameters
+    if (page < 1) {
+      throw new BadRequestException(
+        await this.i18n.translate('validation.min', {
+          lang: locale,
+          args: { min: 1 },
+        }),
+      );
+    }
+
+    if (limit < 1 || limit > 100) {
+      throw new BadRequestException(
+        await this.i18n.translate('validation.limit', {
+          lang: locale,
+        }),
+      );
+    }
+
     const queryBuilder = this.workoutRepository
       .createQueryBuilder('workout')
       .leftJoinAndSelect('workout.exercises', 'exercise')
@@ -180,8 +200,12 @@ export class WorkoutsService {
       });
     }
 
-    const skip = (page - 1) * limit;
-    queryBuilder.skip(skip).take(limit);
+    // Validate limit to prevent division by zero
+    const validLimit = limit > 0 ? limit : 20;
+    const validPage = page > 0 ? page : 1;
+
+    const skip = (validPage - 1) * validLimit;
+    queryBuilder.skip(skip).take(validLimit);
 
     const [workouts, total] = await queryBuilder.getManyAndCount();
 
@@ -189,11 +213,11 @@ export class WorkoutsService {
       this.mapToWorkoutResponse(workout, locale),
     );
 
-    const totalPages = Math.ceil(total / limit);
+    const totalPages = validLimit > 0 ? Math.ceil(total / validLimit) : 1;
 
     const pagination: PaginationDto = {
-      page,
-      limit,
+      page: validPage,
+      limit: validLimit,
       total,
       totalPages,
     };
@@ -255,6 +279,18 @@ export class WorkoutsService {
 
     const updatedWorkout = await this.workoutRepository.save(workout);
 
+    // Notificação para o próprio usuário confirmando envio
+    try {
+      await this.notificationsService.sendToUser(userId, {
+        type: 'workout_sent_to_trainer',
+        title: 'Treino enviado ao treinador',
+        body: 'Seu treino foi marcado como enviado ao treinador.',
+        data: { workoutId: updatedWorkout.id },
+      });
+    } catch (e) {
+      // Falha ao notificar não deve impedir fluxo
+    }
+
     return {
       id: updatedWorkout.id,
       sentToTrainer: updatedWorkout.sentToTrainer,
@@ -267,8 +303,8 @@ export class WorkoutsService {
     locale: string,
   ): WorkoutResponseDto {
     // Calculate exercise volumes
-    const exercises = workout.exercises.map((exercise) => {
-      const exerciseVolume = exercise.seriesConfigs.reduce((total, series) => {
+    const exercises = (workout.exercises || []).map((exercise) => {
+      const exerciseVolume = (exercise.seriesConfigs || []).reduce((total, series) => {
         return total + series.sets * series.reps;
       }, 0);
 
@@ -291,12 +327,12 @@ export class WorkoutsService {
     workout: WorkoutEntity,
     locale: string,
   ): WorkoutDetailsResponseDto {
-    const exercises = workout.exercises.map((exercise) => ({
+    const exercises = (workout.exercises || []).map((exercise) => ({
       id: exercise.exerciseId,
       name: exercise.name,
       abbreviation: exercise.abbreviation,
       isConjugated: exercise.isConjugated,
-      config: exercise.seriesConfigs.map((series) => ({
+      config: (exercise.seriesConfigs || []).map((series) => ({
         id: series.id,
         sets: series.sets,
         reps: series.reps,
@@ -327,12 +363,12 @@ export class WorkoutsService {
       throw new NotFoundException('Workout not found after creation');
     }
 
-    const exercises = fullWorkout.exercises.map((exercise) => ({
+    const exercises = (fullWorkout.exercises || []).map((exercise) => ({
       id: exercise.exerciseId,
       name: exercise.name,
       abbreviation: exercise.abbreviation,
       isConjugated: exercise.isConjugated,
-      config: exercise.seriesConfigs.map((series) => ({
+      config: (exercise.seriesConfigs || []).map((series) => ({
         id: series.id,
         sets: series.sets,
         reps: series.reps,

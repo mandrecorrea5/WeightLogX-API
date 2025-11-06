@@ -12,9 +12,13 @@ import { ConfigService } from '@nestjs/config';
         username: configService.get('database.username'),
         password: configService.get('database.password'),
         database: configService.get('database.database'),
-        entities: [__dirname + '/entities/**/*.entity{.ts,.js}'],
+        entities: [
+          __dirname + '/entities/**/*.entity{.ts,.js}',
+          __dirname + '/../modules/**/entities/**/*.entity{.ts,.js}',
+        ],
         migrations: [__dirname + '/migrations/**/*{.ts,.js}'],
         synchronize: configService.get('database.synchronize'),
+        // Only log queries in development and if explicitly enabled
         logging: configService.get('database.logging'),
         ssl: configService.get('database.ssl'),
       }),

@@ -11,7 +11,14 @@ import { UserModule } from './modules/user/user.module';
 import { WorkoutsModule } from './modules/workouts/workouts.module';
 import { PrsModule } from './modules/prs/prs.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { ExercisesModule } from './modules/exercises/exercises.module';
+import { TrainingCentersModule } from './modules/training-centers/training-centers.module';
+import { MetricsModule } from './modules/metrics/metrics.module';
+import { HealthModule } from './common/health/health.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { MetricsInterceptor } from './modules/metrics/metrics.interceptor';
 
 @Module({
   imports: [
@@ -29,6 +36,11 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     WorkoutsModule,
     PrsModule,
     ReportsModule,
+    ExercisesModule,
+    TrainingCentersModule,
+    MetricsModule,
+    HealthModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [
@@ -40,6 +52,10 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: MetricsInterceptor,
     },
   ],
 })

@@ -46,17 +46,45 @@ export class AllExceptionsFilter implements ExceptionFilter {
         }
       }
     } else if (exception instanceof Error) {
-      message = exception.message;
-      this.logger.error(
-        `Unexpected error: ${exception.message}`,
-        exception.stack,
-      );
+      // Check if it's a validation/business error (should be 400)
+      const errorMessage = exception.message.toLowerCase();
+      const isBusinessError =
+        errorMessage.includes('validation') ||
+        errorMessage.includes('invalid') ||
+        errorMessage.includes('required') ||
+        errorMessage.includes('not found') ||
+        errorMessage.includes('already exists') ||
+        errorMessage.includes('conflict') ||
+        errorMessage.includes('unauthorized') ||
+        errorMessage.includes('forbidden');
+
+      if (isBusinessError && status === HttpStatus.INTERNAL_SERVER_ERROR) {
+        status = HttpStatus.BAD_REQUEST;
+      }
+
+      // Security: Don't expose internal error messages in production
+      if (process.env.NODE_ENV === 'production') {
+        message = 'Internal server error';
+        this.logger.error(
+          `Unexpected error: ${exception.message}`,
+          exception.stack,
+        );
+      } else {
+        message = exception.message;
+        this.logger.error(
+          `Unexpected error: ${exception.message}`,
+          exception.stack,
+        );
+      }
     }
 
     const errorResponse = {
       statusCode: status,
       timestamp: new Date().toISOString(),
-      path: request.url,
+      // Security: Don't expose full path in production for sensitive endpoints
+      path: process.env.NODE_ENV === 'production' && request.url.includes('/api/auth')
+        ? '/api/auth/*'
+        : request.url,
       message,
       ...(errors.length > 0 && { errors }),
     };

@@ -1,0 +1,102 @@
+version: '3.8'
+
+# Docker Compose para desenvolvimento
+# Uso: docker-compose -f docker-compose.dev.yml up
+# 
+# Este arquivo configura a API em modo desenvolvimento com hot reload
+# Os volumes são mapeados na raiz da aplicação para permitir atualizações
+# sem necessidade de rebuild do container
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: weightlogx_db_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DATABASE_USER:-user_weightlogx}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-password_segura}
+      POSTGRES_DB: ${DATABASE_NAME:-weightlogx_db}
+    ports:
+      - "${DATABASE_PORT:-5433}:5432"
+    volumes:
+      # Volume mapeado na raiz para persistência
+      - ./data/postgres-dev:/var/lib/postgresql/data
+    networks:
+      - weightlogx_network_dev
+    healthcheck:
+      # Especifica o banco de dados para evitar erro "database user_weightlogx does not exist"
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-user_weightlogx} -d ${DATABASE_NAME:-weightlogx_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development  # Usar stage de desenvolvimento para hot reload
+    container_name: weightlogx_api_dev
+    restart: unless-stopped
+    user: "0:0"
+    ports:
+      - "${API_PORT:-3000}:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Database - usando o nome do serviço 'db' para comunicação na mesma rede Docker
+      # IMPORTANTE: A aplicação usa DATABASE_*, não POSTGRES_*
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_USER: ${DATABASE_USER:-user_weightlogx}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-password_segura}
+      DATABASE_NAME: ${DATABASE_NAME:-weightlogx_db}
+      DATABASE_SSL: ${DATABASE_SSL:-false}
+      # Application
+      NODE_ENV: development
+      PORT: 3000
+      # JWT
+      JWT_SECRET: ${JWT_SECRET:-dev-secret-key}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      # CORS
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      # Upload
+      UPLOAD_DEST: ./uploads
+      MAX_FILE_SIZE: ${MAX_FILE_SIZE:-5242880}
+    volumes:
+      # Mapear código fonte completo na raiz para hot reload
+      - .:/app
+      # Excluir node_modules do volume para usar os do container
+      - /app/node_modules
+      # Excluir dist do volume para evitar conflito - o NestJS criará dentro do container
+      - /app/dist
+      # Volume para uploads persistente na raiz
+      - ./uploads:/app/uploads
+      # Volume para logs se necessário
+      - ./logs:/app/logs
+    networks:
+      - weightlogx_network_dev
+    # Comando para desenvolvimento com hot reload
+    # Executa como root para criar diretórios, depois muda para nestjs usando su-exec
+    entrypoint: ["/bin/sh", "-c"]
+    command: 
+      - |
+        cp nest-cli.dev.json nest-cli.json 2>/dev/null || true
+        mkdir -p dist/i18n/locales
+        chown -R nestjs:nodejs dist 2>/dev/null || true
+        if command -v su-exec >/dev/null 2>&1; then
+          exec su-exec nestjs npm run start:dev
+        else
+          exec su -s /bin/sh nestjs -c "npm run start:dev"
+        fi
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data_dev:
+
+networks:
+  # Rede compartilhada entre api e db para comunicação interna
+  weightlogx_network_dev:
+    driver: bridge
+

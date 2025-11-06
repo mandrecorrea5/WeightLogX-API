@@ -7,6 +7,7 @@ import { WorkoutEntity } from './entities/workout.entity';
 import { WorkoutExerciseEntity } from './entities/workout-exercise.entity';
 import { SeriesConfigEntity } from './entities/series-config.entity';
 import { PrsModule } from '../prs/prs.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { PrsModule } from '../prs/prs.module';
     ]),
     I18nModule,
     forwardRef(() => PrsModule),
+    NotificationsModule,
   ],
   controllers: [WorkoutsController],
   providers: [WorkoutsService],

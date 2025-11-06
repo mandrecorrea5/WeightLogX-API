@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # 1. Serviço do Banco de Dados PostgreSQL
+  db:
+    image: postgres:14-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: user_weightlogx
+      POSTGRES_PASSWORD: password_segura
+      POSTGRES_DB: weightlogx_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 2. Serviço da API Node.js/NestJS (opcional - para desenvolvimento, rode localmente)
+  # api:
+  #   build: . # Onde o Dockerfile está (Pasta raiz do projeto)
+  #   ports:
+  #     - "3000:3000"
+  #   depends_on:
+  #     - db
+  #   environment:
+  #     DATABASE_URL: postgres://user_weightlogx:password_segura@db:5432/weightlogx_db
+  #     # Outras variáveis (JWT_SECRET, S3_KEY, etc.)
+  #   volumes:
+  #     - .:/usr/src/app
+  #     - /usr/src/app/node_modules
+  #   command: npm run start:dev # Ou npm start para produção
+
+volumes:
+  postgres_data:

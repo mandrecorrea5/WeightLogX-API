@@ -1,0 +1,90 @@
+{
+  "auth": {
+    "register": {
+      "success": "Account created successfully",
+      "emailExists": "Email already registered",
+      "invalidData": "Invalid data"
+    },
+    "login": {
+      "invalidCredentials": "Invalid credentials",
+      "invalidData": "Invalid data"
+    },
+    "forgotPassword": {
+      "success": "Recovery link sent to email",
+      "emailNotFound": "Email not found",
+      "invalidEmail": "Invalid email"
+    },
+    "resetPassword": {
+      "success": "Password changed successfully",
+      "invalidToken": "Invalid reset token",
+      "tokenExpired": "Reset token has expired. Please request a new link",
+      "tokenAlreadyUsed": "This token has already been used. Please request a new link",
+      "invalidData": "Invalid data"
+    }
+  },
+  "user": {
+    "profile": {
+      "updated": "Profile updated successfully",
+      "notFound": "User not found"
+    },
+    "password": {
+      "changed": "Password changed successfully",
+      "currentIncorrect": "Current password incorrect",
+      "invalidData": "Invalid data"
+    },
+    "profileImage": {
+      "uploaded": "Profile image updated successfully",
+      "removed": "Image removed successfully",
+      "invalidFormat": "Invalid image format",
+      "invalidSize": "Invalid image size"
+    }
+  },
+  "workouts": {
+    "create": {
+      "success": "Workout saved successfully",
+      "noExercises": "At least one exercise is required",
+      "noSeries": "Each exercise must have at least one series configured",
+      "incompleteWeights": "All weights must be filled",
+      "weightsMismatch": "Number of weights must match number of sets"
+    },
+    "notFound": "Workout not found",
+    "forbidden": "You don't have permission to access this workout"
+  },
+  "prs": {
+    "notFound": "No PRs found",
+    "calculated": "PRs updated successfully"
+  },
+  "reports": {
+    "exerciseIdRequired": "Exercise ID is required when type is 'exercicio'",
+    "generated": "Report generated successfully"
+  },
+  "exercise": {
+    "snatch": "Snatch",
+    "cleanAndJerk": "Clean and Jerk",
+    "frontSquat": "Front Squat",
+    "backSquat": "Back Squat",
+    "pushPress": "Push Press",
+    "jerk": "Jerk",
+    "snatchBalance": "Snatch Balance",
+    "powerSnatch": "Power Snatch",
+    "powerClean": "Power Clean",
+    "hangSnatch": "Hang Snatch",
+    "hangClean": "Hang Clean",
+    "snatchPull": "Snatch Pull"
+  },
+  "validation": {
+    "required": "This field is required",
+    "email": "Invalid email",
+    "minLength": "Must be at least {{min}} characters",
+    "maxLength": "Must be at most {{max}} characters",
+    "min": "Minimum value is {{min}}",
+    "max": "Maximum value is {{max}}",
+    "dateFormat": "Invalid date format (dd/MM/yyyy)",
+    "phoneFormat": "Invalid phone format ((XX) XXXXX-XXXX)",
+    "password": {
+      "mismatch": "Passwords do not match",
+      "weak": "Password must contain at least one letter and one number"
+    }
+  }
+}
+

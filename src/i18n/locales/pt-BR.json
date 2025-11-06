@@ -1,0 +1,90 @@
+{
+  "auth": {
+    "register": {
+      "success": "Conta criada com sucesso",
+      "emailExists": "Email já cadastrado",
+      "invalidData": "Dados inválidos"
+    },
+    "login": {
+      "invalidCredentials": "Credenciais inválidas",
+      "invalidData": "Dados inválidos"
+    },
+    "forgotPassword": {
+      "success": "Link de recuperação enviado para o email",
+      "emailNotFound": "Email não encontrado",
+      "invalidEmail": "Email inválido"
+    },
+    "resetPassword": {
+      "success": "Senha alterada com sucesso",
+      "invalidToken": "Token de redefinição inválido",
+      "tokenExpired": "Token de redefinição expirado. Solicite um novo link",
+      "tokenAlreadyUsed": "Este token já foi utilizado. Solicite um novo link",
+      "invalidData": "Dados inválidos"
+    }
+  },
+  "user": {
+    "profile": {
+      "updated": "Perfil atualizado com sucesso",
+      "notFound": "Usuário não encontrado"
+    },
+    "password": {
+      "changed": "Senha alterada com sucesso",
+      "currentIncorrect": "Senha atual incorreta",
+      "invalidData": "Dados inválidos"
+    },
+    "profileImage": {
+      "uploaded": "Imagem de perfil atualizada com sucesso",
+      "removed": "Imagem removida com sucesso",
+      "invalidFormat": "Formato de imagem inválido",
+      "invalidSize": "Tamanho de imagem inválido"
+    }
+  },
+  "workouts": {
+    "create": {
+      "success": "Treino salvo com sucesso",
+      "noExercises": "Pelo menos um exercício é obrigatório",
+      "noSeries": "Cada exercício deve ter pelo menos uma série configurada",
+      "incompleteWeights": "Todos os pesos devem ser preenchidos",
+      "weightsMismatch": "O número de pesos deve corresponder ao número de séries"
+    },
+    "notFound": "Treino não encontrado",
+    "forbidden": "Você não tem permissão para acessar este treino"
+  },
+  "prs": {
+    "notFound": "Nenhum PR encontrado",
+    "calculated": "PRs atualizados com sucesso"
+  },
+  "reports": {
+    "exerciseIdRequired": "O ID do exercício é obrigatório quando o tipo é 'exercicio'",
+    "generated": "Relatório gerado com sucesso"
+  },
+  "exercise": {
+    "snatch": "Arranco",
+    "cleanAndJerk": "Arremesso",
+    "frontSquat": "Front Squat",
+    "backSquat": "Back Squat",
+    "pushPress": "Push Press",
+    "jerk": "Jerk",
+    "snatchBalance": "Snatch Balance",
+    "powerSnatch": "Power Snatch",
+    "powerClean": "Power Clean",
+    "hangSnatch": "Hang Snatch",
+    "hangClean": "Hang Clean",
+    "snatchPull": "Snatch Pull"
+  },
+  "validation": {
+    "required": "Este campo é obrigatório",
+    "email": "Email inválido",
+    "minLength": "Deve ter no mínimo {{min}} caracteres",
+    "maxLength": "Deve ter no máximo {{max}} caracteres",
+    "min": "Valor mínimo é {{min}}",
+    "max": "Valor máximo é {{max}}",
+    "dateFormat": "Formato de data inválido (dd/MM/yyyy)",
+    "phoneFormat": "Formato de telefone inválido ((XX) XXXXX-XXXX)",
+    "password": {
+      "mismatch": "As senhas não coincidem",
+      "weak": "Senha deve conter pelo menos uma letra e um número"
+    }
+  }
+}
+

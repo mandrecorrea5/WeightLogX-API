@@ -92,8 +92,86 @@ services:
     stdin_open: true
     tty: true
 
+  # Prometheus - Coleta de métricas
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: weightlogx_prometheus_dev
+    restart: unless-stopped
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data_dev:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - weightlogx_network_dev
+    depends_on:
+      - api
+
+  # Loki - Coleta de logs
+  loki:
+    image: grafana/loki:latest
+    container_name: weightlogx_loki_dev
+    restart: unless-stopped
+    ports:
+      - "${LOKI_PORT:-3100}:3100"
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki_data_dev:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - weightlogx_network_dev
+
+  # Promtail - Envia logs para Loki
+  promtail:
+    image: grafana/promtail:latest
+    container_name: weightlogx_promtail_dev
+    restart: unless-stopped
+    volumes:
+      - ./logs:/var/log/app:ro
+      - ./promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - weightlogx_network_dev
+    depends_on:
+      - loki
+
+  # Grafana - Visualização de métricas e logs
+  grafana:
+    image: grafana/grafana:latest
+    container_name: weightlogx_grafana_dev
+    restart: unless-stopped
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3001
+      - GF_INSTALL_PLUGINS=
+    volumes:
+      - grafana_data_dev:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+    networks:
+      - weightlogx_network_dev
+    depends_on:
+      - prometheus
+      - loki
+
 volumes:
   postgres_data_dev:
+  prometheus_data_dev:
+  loki_data_dev:
+  grafana_data_dev:
 
 networks:
   # Rede compartilhada entre api e db para comunicação interna

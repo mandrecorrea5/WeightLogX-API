@@ -1,4 +1,4 @@
-import { IsNumber, IsArray, ValidateNested } from 'class-validator';
+import { IsNumber, IsArray, ValidateNested, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -10,27 +10,49 @@ export class GraphDataPointDto {
   date: string;
 
   @ApiProperty({
-    description: 'Valor do ponto no gráfico',
-    example: 120,
+    description: 'Valor do ponto no gráfico (volume médio por treino em kg)',
+    example: 248.33,
   })
   @IsNumber()
   value: number;
 }
 
-export class ReportsResponseDto {
+export class MetricWithVariationDto {
   @ApiProperty({
-    description: 'Média geral de peso levantado no período (kg)',
-    example: 142,
+    description: 'Valor atual da métrica',
+    example: 248.33,
   })
   @IsNumber()
-  mediaGeral: number;
+  current: number;
 
   @ApiProperty({
-    description: 'Volume total (soma de todos os pesos levantados em kg)',
-    example: 8450,
+    description: 'Variação percentual em relação ao período anterior',
+    example: 15.5,
   })
   @IsNumber()
-  volumeTotal: number;
+  @IsOptional()
+  variationPercent?: number;
+
+  @ApiProperty({
+    description: 'Indica se a variação é positiva (true) ou negativa (false)',
+    example: true,
+  })
+  @IsOptional()
+  isPositive?: boolean;
+}
+
+export class ReportsResponseDto {
+  @ApiProperty({
+    description: 'Evolução Média Geral (volume médio por treino) com variação e gráfico',
+    type: MetricWithVariationDto,
+  })
+  evolucaoMediaGeral: MetricWithVariationDto;
+
+  @ApiProperty({
+    description: 'Volume Total com variação',
+    type: MetricWithVariationDto,
+  })
+  volumeTotal: MetricWithVariationDto;
 
   @ApiProperty({
     description: 'Número de PRs recentes estabelecidos no período',
@@ -40,7 +62,14 @@ export class ReportsResponseDto {
   prsRecentes: number;
 
   @ApiProperty({
-    description: 'Dados para gráfico de linha (mês a mês)',
+    description: 'Quantidade de treinos no período (após aplicar filtros)',
+    example: 12,
+  })
+  @IsNumber()
+  quantidadeTreinos: number;
+
+  @ApiProperty({
+    description: 'Dados para gráfico de linha (mês a mês) - Evolução Média Geral',
     type: [GraphDataPointDto],
   })
   @IsArray()

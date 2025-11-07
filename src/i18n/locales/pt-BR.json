@@ -49,7 +49,11 @@
       "noExercises": "Pelo menos um exercício é obrigatório",
       "noSeries": "Cada exercício deve ter pelo menos uma série configurada",
       "incompleteWeights": "Todos os pesos devem ser preenchidos",
-      "weightsMismatch": "O número de pesos deve corresponder ao número de séries"
+      "weightsMismatch": "O número de pesos deve corresponder ao número de séries",
+      "invalidConfig": "A configuração de séries deve ser um array"
+    },
+    "update": {
+      "success": "Treino atualizado com sucesso"
     },
     "notFound": "Treino não encontrado",
     "forbidden": "Você não tem permissão para acessar este treino"
@@ -59,7 +63,7 @@
     "calculated": "PRs atualizados com sucesso"
   },
   "reports": {
-    "exerciseIdRequired": "O ID do exercício é obrigatório quando o tipo é 'exercicio'",
+    "exerciseIdRequired": "O parâmetro 'exerciseId' é obrigatório quando o tipo é 'exercicio'. Exemplo: ?type=exercicio&timeFilter=30d&exerciseId=1",
     "generated": "Relatório gerado com sucesso"
   },
   "exercises": {

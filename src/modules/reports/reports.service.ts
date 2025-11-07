@@ -38,7 +38,14 @@ export class ReportsService {
     // Calculate date range based on timeFilter
     const { startDate, endDate } = this.getDateRange(query.timeFilter);
 
-    // Get workouts in the date range
+    // Calculate previous period for comparison
+    const periodDuration = endDate.getTime() - startDate.getTime();
+    const previousEndDate = new Date(startDate);
+    previousEndDate.setTime(previousEndDate.getTime() - 1); // 1ms before current period
+    const previousStartDate = new Date(previousEndDate);
+    previousStartDate.setTime(previousStartDate.getTime() - periodDuration);
+
+    // Get workouts in the current date range
     const workouts = await this.getWorkoutsInRange(
       userId,
       startDate,
@@ -47,10 +54,29 @@ export class ReportsService {
       query.exerciseId,
     );
 
-    // Calculate metrics
-    const mediaGeral = await this.calculateMediaGeral(workouts, query.type, query.exerciseId);
-    const volumeTotal = await this.calculateVolumeTotal(workouts, query.type, query.exerciseId);
+    // Get workouts in the previous period for comparison
+    const previousWorkouts = await this.getWorkoutsInRange(
+      userId,
+      previousStartDate,
+      previousEndDate,
+      query.type,
+      query.exerciseId,
+    );
+
+    // Calculate current period metrics
+    const currentMediaGeral = await this.calculateMediaGeral(workouts, query.type, query.exerciseId);
+    const currentVolumeTotal = await this.calculateVolumeTotal(workouts, query.type, query.exerciseId);
+
+    // Calculate previous period metrics
+    const previousMediaGeral = await this.calculateMediaGeral(previousWorkouts, query.type, query.exerciseId);
+    const previousVolumeTotal = await this.calculateVolumeTotal(previousWorkouts, query.type, query.exerciseId);
+
+    // Calculate variations
+    const mediaGeralVariation = this.calculateVariation(currentMediaGeral, previousMediaGeral);
+    const volumeTotalVariation = this.calculateVariation(currentVolumeTotal, previousVolumeTotal);
+
     const prsRecentes = await this.countRecentPRs(userId, startDate, endDate, query.exerciseId);
+    const quantidadeTreinos = this.countWorkouts(workouts, query.type, query.exerciseId);
     const graphData = await this.generateGraphData(
       userId,
       startDate,
@@ -60,11 +86,64 @@ export class ReportsService {
     );
 
     return {
-      mediaGeral,
-      volumeTotal,
+      evolucaoMediaGeral: {
+        current: currentMediaGeral,
+        variationPercent: mediaGeralVariation.percent,
+        isPositive: mediaGeralVariation.isPositive,
+      },
+      volumeTotal: {
+        current: currentVolumeTotal,
+        variationPercent: volumeTotalVariation.percent,
+        isPositive: volumeTotalVariation.isPositive,
+      },
       prsRecentes,
+      quantidadeTreinos,
       graphData,
     };
+  }
+
+  private calculateVariation(current: number, previous: number): { percent: number; isPositive: boolean } {
+    if (previous === 0) {
+      return { percent: current > 0 ? 100 : 0, isPositive: current > 0 };
+    }
+    const percent = Number(((current - previous) / previous * 100).toFixed(1));
+    return { percent, isPositive: percent >= 0 };
+  }
+
+  private countWorkouts(
+    workouts: WorkoutEntity[],
+    type: ReportType,
+    exerciseId?: string,
+  ): number {
+    let workoutCount = 0;
+
+    for (const workout of workouts) {
+      let workoutHasMatchingExercises = false;
+      let workoutWeight = 0;
+
+      for (const exercise of workout.exercises) {
+        // Filter by exercise if type is exercicio
+        if (type === ReportType.EXERCICIO && exercise.exerciseId !== exerciseId) {
+          continue;
+        }
+
+        workoutHasMatchingExercises = true;
+
+        for (const seriesConfig of exercise.seriesConfigs) {
+          if (seriesConfig.weights && seriesConfig.weights.length > 0) {
+            const seriesTotalWeight = seriesConfig.weights.reduce((sum, w) => sum + w, 0);
+            workoutWeight += seriesTotalWeight;
+          }
+        }
+      }
+
+      // Only count workouts that have matching exercises and weight > 0
+      if (workoutHasMatchingExercises && workoutWeight > 0) {
+        workoutCount++;
+      }
+    }
+
+    return workoutCount;
   }
 
   private getDateRange(timeFilter: TimeFilter): { startDate: Date; endDate: Date } {
@@ -121,26 +200,39 @@ export class ReportsService {
     }
 
     let totalWeight = 0;
-    let totalReps = 0;
+    let workoutCount = 0;
 
+    // Calculate total weight and count workouts that have exercises matching the filter
     for (const workout of workouts) {
+      let workoutHasMatchingExercises = false;
+      let workoutWeight = 0;
+
       for (const exercise of workout.exercises) {
         // Filter by exercise if type is exercicio
         if (type === ReportType.EXERCICIO && exercise.exerciseId !== exerciseId) {
           continue;
         }
 
+        workoutHasMatchingExercises = true;
+
         for (const seriesConfig of exercise.seriesConfigs) {
           if (seriesConfig.weights && seriesConfig.weights.length > 0) {
             const seriesTotalWeight = seriesConfig.weights.reduce((sum, w) => sum + w, 0);
-            totalWeight += seriesTotalWeight;
-            totalReps += seriesConfig.sets * seriesConfig.reps;
+            workoutWeight += seriesTotalWeight;
           }
         }
       }
+
+      // Only count workouts that have matching exercises
+      if (workoutHasMatchingExercises && workoutWeight > 0) {
+        totalWeight += workoutWeight;
+        workoutCount++;
+      }
     }
 
-    return totalReps > 0 ? Number((totalWeight / totalReps).toFixed(2)) : 0;
+    // Media Geral = Volume Total / Número de Treinos
+    // Representa o volume médio por treino no período
+    return workoutCount > 0 ? Number((totalWeight / workoutCount).toFixed(2)) : 0;
   }
 
   private async calculateVolumeTotal(
@@ -205,16 +297,18 @@ export class ReportsService {
     );
 
     // Group workouts by month
-    const monthlyData = new Map<string, { totalWeight: number; totalReps: number }>();
+    const monthlyData = new Map<string, { totalWeight: number; workoutCount: number }>();
 
     for (const workout of workouts) {
       const monthKey = this.getMonthKey(workout.date);
 
       if (!monthlyData.has(monthKey)) {
-        monthlyData.set(monthKey, { totalWeight: 0, totalReps: 0 });
+        monthlyData.set(monthKey, { totalWeight: 0, workoutCount: 0 });
       }
 
       const monthData = monthlyData.get(monthKey)!;
+      let workoutHasMatchingExercises = false;
+      let workoutWeight = 0;
 
       for (const exercise of workout.exercises) {
         // Filter by exercise if type is exercicio
@@ -222,24 +316,31 @@ export class ReportsService {
           continue;
         }
 
+        workoutHasMatchingExercises = true;
+
         for (const seriesConfig of exercise.seriesConfigs) {
           if (seriesConfig.weights && seriesConfig.weights.length > 0) {
             const seriesTotalWeight = seriesConfig.weights.reduce((sum, w) => sum + w, 0);
-            monthData.totalWeight += seriesTotalWeight;
-            monthData.totalReps += seriesConfig.sets * seriesConfig.reps;
+            workoutWeight += seriesTotalWeight;
           }
         }
       }
+
+      // Only count workouts that have matching exercises
+      if (workoutHasMatchingExercises && workoutWeight > 0) {
+        monthData.totalWeight += workoutWeight;
+        monthData.workoutCount++;
+      }
     }
 
-    // Convert to array and calculate average
+    // Convert to array and calculate average (volume médio por treino no mês)
     const graphData: GraphDataPointDto[] = [];
     const sortedMonths = Array.from(monthlyData.keys()).sort();
 
     for (const monthKey of sortedMonths) {
       const monthData = monthlyData.get(monthKey)!;
-      const average = monthData.totalReps > 0
-        ? Number((monthData.totalWeight / monthData.totalReps).toFixed(2))
+      const average = monthData.workoutCount > 0
+        ? Number((monthData.totalWeight / monthData.workoutCount).toFixed(2))
         : 0;
 
       graphData.push({

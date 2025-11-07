@@ -3,6 +3,8 @@ import {
   IsDateString,
   IsString,
   IsNumber,
+  IsBoolean,
+  IsOptional,
   ValidateNested,
   ArrayMinSize,
   Min,
@@ -50,12 +52,11 @@ export class SeriesConfigDto {
   percentage: number;
 
   @ApiProperty({
-    description: 'Array de pesos executados em cada série',
+    description: 'Array de pesos executados em cada série (pode ser array vazio se ainda não preenchido)',
     example: [80, 82.5, 85],
     type: [Number],
   })
   @IsArray()
-  @ArrayNotEmpty()
   @IsNumber({}, { each: true })
   weights: number[];
 }
@@ -83,14 +84,22 @@ export class ExerciseConfigDto {
   abbreviation: string;
 
   @ApiProperty({
-    description: 'Configuração de séries do exercício',
+    description: 'Configuração de séries do exercício (pode ser array vazio)',
     type: [SeriesConfigDto],
   })
   @IsArray()
-  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => SeriesConfigDto)
   config: SeriesConfigDto[];
+
+  @ApiProperty({
+    description: 'Se é exercício conjugado (dois exercícios juntos)',
+    example: false,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  isConjugated?: boolean;
 }
 
 export class CreateWorkoutDto {

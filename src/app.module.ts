@@ -20,16 +20,22 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { MetricsInterceptor } from './modules/metrics/metrics.interceptor';
 
+// Rate limiting configuration
+// Development: 100 requests/minute, Production: 60 requests/minute
+const throttleConfig = {
+  ttl: parseInt(process.env.THROTTLE_TTL || '60000', 10), // 1 minute default
+  limit: process.env.NODE_ENV === 'production'
+    ? parseInt(process.env.THROTTLE_LIMIT || '60', 10) // 60 req/min in production
+    : parseInt(process.env.THROTTLE_LIMIT || '100', 10), // 100 req/min in development
+};
+
 @Module({
   imports: [
     ConfigModule,
     DatabaseModule,
     I18nModule,
     ThrottlerModule.forRoot([
-      {
-        ttl: 60000, // 1 minute
-        limit: 10, // 10 requests per minute
-      },
+      throttleConfig,
     ]),
     AuthModule,
     UserModule,

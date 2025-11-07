@@ -49,7 +49,11 @@
       "noExercises": "At least one exercise is required",
       "noSeries": "Each exercise must have at least one series configured",
       "incompleteWeights": "All weights must be filled",
-      "weightsMismatch": "Number of weights must match number of sets"
+      "weightsMismatch": "Number of weights must match number of sets",
+      "invalidConfig": "Series configuration must be an array"
+    },
+    "update": {
+      "success": "Workout updated successfully"
     },
     "notFound": "Workout not found",
     "forbidden": "You don't have permission to access this workout"
@@ -59,7 +63,7 @@
     "calculated": "PRs updated successfully"
   },
   "reports": {
-    "exerciseIdRequired": "Exercise ID is required when type is 'exercicio'",
+    "exerciseIdRequired": "The 'exerciseId' parameter is required when type is 'exercicio'. Example: ?type=exercicio&timeFilter=30d&exerciseId=1",
     "generated": "Report generated successfully"
   },
   "exercises": {

@@ -6,6 +6,7 @@ import { WorkoutsService } from './workouts.service';
 import { WorkoutEntity } from './entities/workout.entity';
 import { WorkoutExerciseEntity } from './entities/workout-exercise.entity';
 import { SeriesConfigEntity } from './entities/series-config.entity';
+import { PersonalRecordEntity } from '../prs/entities/personal-record.entity';
 import { PrsModule } from '../prs/prs.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 
@@ -15,6 +16,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
       WorkoutEntity,
       WorkoutExerciseEntity,
       SeriesConfigEntity,
+      PersonalRecordEntity,
     ]),
     I18nModule,
     forwardRef(() => PrsModule),

@@ -46,8 +46,8 @@ COPY package*.json ./
 COPY tsconfig*.json ./
 COPY nest-cli.json ./
 
-# Instalar todas as dependências (incluindo devDependencies para hot reload)
-RUN npm ci && npm cache clean --force
+      # Instalar todas as dependências (incluindo devDependencies para hot reload)
+      RUN npm ci --legacy-peer-deps && npm cache clean --force
 
 # Instalar su-exec para mudar de usuário (mais leve que su)
 RUN apk add --no-cache su-exec && \

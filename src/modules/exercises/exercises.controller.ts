@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
@@ -79,7 +80,7 @@ export class ExercisesController {
 
   @Put(':id')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Atualizar exercício' })
+  @ApiOperation({ summary: 'Atualizar exercício (PUT)' })
   @ApiParam({ name: 'id', description: 'ID do exercício' })
   @ApiBody({ type: UpdateExerciseDto })
   @ApiResponse({
@@ -90,6 +91,26 @@ export class ExercisesController {
   @ApiResponse({ status: 404, description: 'Exercício não encontrado' })
   @ApiResponse({ status: 409, description: 'Nome já existe' })
   async update(
+    @Param('id') id: string,
+    @Body() updateExerciseDto: UpdateExerciseDto,
+    @I18nLang() locale: string,
+  ): Promise<ExerciseResponseDto> {
+    return this.exercisesService.update(id, updateExerciseDto, locale);
+  }
+
+  @Patch(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Atualizar exercício (PATCH)' })
+  @ApiParam({ name: 'id', description: 'ID do exercício' })
+  @ApiBody({ type: UpdateExerciseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Exercício atualizado com sucesso',
+    type: ExerciseResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Exercício não encontrado' })
+  @ApiResponse({ status: 409, description: 'Nome já existe' })
+  async patch(
     @Param('id') id: string,
     @Body() updateExerciseDto: UpdateExerciseDto,
     @I18nLang() locale: string,

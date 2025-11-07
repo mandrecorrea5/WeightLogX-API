@@ -52,23 +52,49 @@ Set trainer response (shape equals profile):
 - `POST /api/workouts` – create workout
 - `GET /api/workouts` – list workouts (supports pagination: `page`, `limit`)
 - `GET /api/workouts/:id` – workout details
-- `PUT /api/workouts/:id` – update workout
-- `DELETE /api/workouts/:id` – delete workout
-- `POST /api/workouts/:id/send-to-trainer` – marks workout as sent; triggers notification
+- `PUT /api/workouts/:id` – update workout (uses same body as POST)
+- `DELETE /api/workouts/:id` – delete workout (returns 204 No Content on success)
+- `PUT /api/workouts/:id/send-to-trainer` – marks workout as sent; triggers notification
 
-Create workout (simplified):
-```
+**Note:** 
+- UPDATE endpoint validates ownership, deletes old exercises/series, creates new ones, and recalculates PRs
+- DELETE endpoint validates ownership (only the workout owner can delete it). Cascade delete automatically removes associated exercises and series configs
+- Both UPDATE and DELETE remove related PRs and recalculate them if needed
+
+**Create/Update workout body:**
+```json
 {
-  "date": "2025-01-10",
+  "date": "2025-01-10T10:00:00.000Z",
   "exercises": [
     {
-      "exerciseId": "<uuid>",
-      "name": "Snatch",
-      "seriesConfigs": [{ "weights": [40, 45, 50] }]
+      "exerciseId": "881eea3a-0b5e-456b-84c8-3ec218b8517b",
+      "name": "Arranco",
+      "abbreviation": "A",
+      "config": [
+        {
+          "id": "series-1",
+          "sets": 3,
+          "reps": 3,
+          "percentage": 75,
+          "weights": [50, 60, 60]
+        },
+        {
+          "id": "series-2",
+          "sets": 3,
+          "reps": 2,
+          "percentage": 80,
+          "weights": [70, 70, 80]
+        }
+      ]
     }
   ]
 }
 ```
+
+**Note:** 
+- `date` deve ser ISO 8601 (pode incluir ou não timezone)
+- Cada exercício precisa de `exerciseId`, `name`, `abbreviation`
+- Cada série em `config` precisa de `id`, `sets`, `reps`, `percentage`, `weights` (array)
 
 Send to trainer response:
 ```
@@ -81,10 +107,23 @@ Send to trainer response:
 - Background: when saving a workout, PRs are recalculated; on new PR a notification is created.
 
 ### Exercises
-- `GET /api/exercises` – list
-- `POST /api/exercises` – create
-- `PUT /api/exercises/:id` – update
-- `DELETE /api/exercises/:id` – delete
+- `GET /api/exercises` – list all exercises
+- `POST /api/exercises` – create exercise
+- `PUT /api/exercises/:id` – update exercise (full update)
+- `PATCH /api/exercises/:id` – update exercise (partial update, same as PUT)
+- `DELETE /api/exercises/:id` – delete exercise
+
+**Create/Update exercise body:**
+```json
+{
+  "namePtBr": "Arranco Técnico",
+  "nameEn": "Squat Snatch",
+  "abbreviationPtBr": "ATec",
+  "abbreviationEn": "SSn"
+}
+```
+
+**Note:** Todos os campos são opcionais no update (PATCH/PUT), mas pelo menos um deve ser fornecido.
 
 ### Training Centers
 - `GET /api/training-centers`
@@ -94,8 +133,47 @@ Send to trainer response:
 - `DELETE /api/training-centers/:id`
 
 ### Reports
-- `GET /api/reports/overview` – high-level stats
-- `GET /api/reports/user` – per-user stats
+- `GET /api/reports?type={geral|exercicio|carga}&timeFilter={7d|30d|3m|1y}&exerciseId={uuid}` – generate workout reports
+
+**Query Parameters:**
+- `type` (required): `geral` | `exercicio` | `carga`
+- `timeFilter` (required): `7d` | `30d` | `3m` | `1y`
+- `exerciseId` (optional, required if `type=exercicio`): UUID do exercício
+
+**Examples:**
+```bash
+# Relatório geral dos últimos 30 dias
+GET /api/reports?type=geral&timeFilter=30d
+
+# Relatório dos últimos 3 meses
+GET /api/reports?type=geral&timeFilter=3m
+
+# Relatório de um exercício específico (últimos 30 dias)
+GET /api/reports?type=exercicio&timeFilter=30d&exerciseId=881eea3a-0b5e-456b-84c8-3ec218b8517b
+```
+
+**Response:**
+```json
+{
+  "evolucaoMediaGeral": {
+    "current": 248.33,
+    "variationPercent": 15.5,
+    "isPositive": true
+  },
+  "volumeTotal": {
+    "current": 745.0,
+    "variationPercent": 10.2,
+    "isPositive": true
+  },
+  "prsRecentes": 3,
+  "quantidadeTreinos": 12,
+  "graphData": [
+    { "date": "2024-01-01", "value": 200.5 },
+    { "date": "2024-02-01", "value": 220.3 },
+    { "date": "2024-03-01", "value": 248.33 }
+  ]
+}
+```
 
 ### Notifications (REST)
 - `GET /api/notifications` – list notifications; query: `page`, `limit`, `unreadOnly`
@@ -188,15 +266,38 @@ Notes:
 
 ### Conventions
 - Pagination: `page` (1-based), `limit` (max 100). Responses include `{ pagination: { page, limit, total, totalPages } }`
-- Dates: ISO 8601 in responses; input dates typically `YYYY-MM-DD` for workout date
+- Dates: ISO 8601 in responses; input dates typically `YYYY-MM-DD` for workout date or ISO 8601 with timezone
 - IDs: UUID strings
 - Auth required for all endpoints unless explicitly marked public (health/metrics may be public in non-prod)
 - CORS: configured via `CORS_ORIGIN` env; credentials enabled
 
+### Required Headers
+All authenticated requests must include:
+```
+Authorization: Bearer <jwt_token>
+Content-Type: application/json (for POST/PUT/PATCH with body)
+Accept-Language: pt-BR | en (optional, defaults to pt-BR)
+```
+
+**Important:**
+- Query parameters must be properly URL-encoded (e.g., `exerciseId=881eea3a-0b5e-456b-84c8-3ec218b8517b`)
+- JSON bodies must be valid JSON (use `JSON.stringify()` in JavaScript)
+- Content-Type must match the body type (application/json for JSON, multipart/form-data for file uploads)
+
 ### Security
-- Helmet enabled; CORS restricted by env; rate limiting recommended at gateway/proxy
+- Helmet enabled; CORS restricted by env; rate limiting enabled
 - JWT required for protected routes; bcrypt for passwords; DB logging only in development
 - Swagger at `/api/docs` except in production unless `ENABLE_SWAGGER=true`
+
+### Rate Limiting
+- **Default limits:**
+  - Development: 100 requests/minute
+  - Production: 60 requests/minute
+- **Configuration:** Via environment variables:
+  - `THROTTLE_TTL`: Time window in milliseconds (default: 60000 = 1 minute)
+  - `THROTTLE_LIMIT`: Maximum requests per window (default: 100 dev, 60 prod)
+- **Error response:** `429 Too Many Requests` when limit exceeded
+- **Headers:** Response includes `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`
 
 ### Environment (selected)
 - `NODE_ENV` – `development` | `production`
@@ -206,9 +307,9 @@ Notes:
 - Upload: `UPLOAD_DEST`, `MAX_FILE_SIZE`
 
 ### Quick test (curl)
-```
+```bash
 # Health
-curl -s http://localhost:3000/api/health | jq .
+curl -s http://localhost:3000/api/health
 
 # Login
 TOKEN=$(curl -s -X POST http://localhost:3000/api/auth/login \
@@ -217,7 +318,54 @@ TOKEN=$(curl -s -X POST http://localhost:3000/api/auth/login \
 
 # List notifications
 curl -s http://localhost:3000/api/notifications \
-  -H "Authorization: Bearer $TOKEN" | jq .
+  -H "Authorization: Bearer $TOKEN"
+
+# Get reports (geral, últimos 30 dias)
+curl -s "http://localhost:3000/api/reports?type=geral&timeFilter=30d" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Accept-Language: pt-BR"
+
+# Get reports (exercício específico)
+curl -s "http://localhost:3000/api/reports?type=exercicio&timeFilter=30d&exerciseId=881eea3a-0b5e-456b-84c8-3ec218b8517b" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Accept-Language: pt-BR"
+
+# Update workout
+curl -X PUT "http://localhost:3000/api/workouts/{workoutId}" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "Accept-Language: pt-BR" \
+  -d '{
+    "date": "2025-11-07T01:04:02.821Z",
+    "exercises": [
+      {
+        "exerciseId": "881eea3a-0b5e-456b-84c8-3ec218b8517b",
+        "name": "Arranco",
+        "abbreviation": "A",
+        "config": [
+          {
+            "id": "0b6823fb-000a-42cb-a25c-df77ef2e3b60",
+            "sets": 3,
+            "reps": 3,
+            "percentage": 75,
+            "weights": [50, 60, 60]
+          }
+        ]
+      }
+    ]
+  }'
+
+# Update exercise (PATCH)
+curl -X PATCH "http://localhost:3000/api/exercises/{exerciseId}" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "Accept-Language: pt-BR" \
+  -d '{
+    "namePtBr": "Arranco Técnico",
+    "nameEn": "Squat Snatch",
+    "abbreviationPtBr": "ATec",
+    "abbreviationEn": "SSn"
+  }'
 ```
 
 ### Frontend tips
@@ -225,6 +373,95 @@ curl -s http://localhost:3000/api/notifications \
 - Use WebSocket namespace `/ws` with JWT on connection
 - Watch `unread_count:update` to update badges
 - Debounce writes to `notification:read` to reduce chatter
+
+### Request Examples (Complete)
+
+**1. Reports - Relatório Geral:**
+```javascript
+// JavaScript/TypeScript
+const response = await fetch('http://localhost:3000/api/reports?type=geral&timeFilter=30d', {
+  method: 'GET',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Accept-Language': 'pt-BR'
+  }
+});
+const data = await response.json();
+// data.evolucaoMediaGeral.current, data.volumeTotal.current, data.quantidadeTreinos, data.graphData
+```
+
+**2. Reports - Por Exercício:**
+```javascript
+// IMPORTANTE: exerciseId é obrigatório quando type=exercicio
+const exerciseId = '881eea3a-0b5e-456b-84c8-3ec218b8517b';
+const response = await fetch(
+  `http://localhost:3000/api/reports?type=exercicio&timeFilter=30d&exerciseId=${exerciseId}`,
+  {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept-Language': 'pt-BR'
+    }
+  }
+);
+```
+
+**3. Update Workout:**
+```javascript
+const workoutId = 'be62e7c6-f8d5-425c-ad95-433226270a8b';
+const response = await fetch(`http://localhost:3000/api/workouts/${workoutId}`, {
+  method: 'PUT',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+    'Accept-Language': 'pt-BR'
+  },
+  body: JSON.stringify({
+    date: '2025-11-07T01:04:02.821Z',
+    exercises: [
+      {
+        exerciseId: '881eea3a-0b5e-456b-84c8-3ec218b8517b',
+        name: 'Arranco',
+        abbreviation: 'A',
+        config: [
+          {
+            id: '0b6823fb-000a-42cb-a25c-df77ef2e3b60',
+            sets: 3,
+            reps: 3,
+            percentage: 75,
+            weights: [50, 60, 60]
+          }
+        ]
+      }
+    ]
+  })
+});
+```
+
+**4. Update Exercise:**
+```javascript
+const exerciseId = '3965f327-0724-46a9-b18c-1c341c64a690';
+const response = await fetch(`http://localhost:3000/api/exercises/${exerciseId}`, {
+  method: 'PATCH', // ou PUT
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+    'Accept-Language': 'pt-BR'
+  },
+  body: JSON.stringify({
+    namePtBr: 'Arranco Técnico',
+    nameEn: 'Squat Snatch',
+    abbreviationPtBr: 'ATec',
+    abbreviationEn: 'SSn'
+  })
+});
+```
+
+**Common Mistakes:**
+- ❌ Reports sem `exerciseId` quando `type=exercicio` → 400 Bad Request
+- ❌ Workout update sem campo `config` nos exercícios → 400 Bad Request
+- ❌ Headers faltando `Authorization` → 401 Unauthorized
+- ❌ Body não é JSON válido → 400 Bad Request
 
 If anything is missing for your UI flows, open an issue with the exact field/endpoint needed.
 

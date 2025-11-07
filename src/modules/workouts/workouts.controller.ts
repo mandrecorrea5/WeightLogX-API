@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Put,
+  Delete,
   Body,
   Param,
   Query,
@@ -118,6 +119,46 @@ export class WorkoutsController {
     @I18nLang() locale: string = 'pt-BR',
   ): Promise<SendToTrainerResponseDto> {
     return this.workoutsService.sendToTrainer(id, user.id, locale);
+  }
+
+  @Put(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Atualizar um treino' })
+  @ApiParam({ name: 'id', description: 'ID do treino' })
+  @ApiBody({ type: CreateWorkoutDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Treino atualizado com sucesso',
+    type: CreateWorkoutResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Dados inválidos' })
+  @ApiResponse({ status: 404, description: 'Treino não encontrado' })
+  @ApiResponse({ status: 403, description: 'Acesso negado' })
+  async update(
+    @CurrentUser() user: UserEntity,
+    @Param('id') id: string,
+    @Body() updateWorkoutDto: CreateWorkoutDto,
+    @I18nLang() locale: string = 'pt-BR',
+  ): Promise<CreateWorkoutResponseDto> {
+    return this.workoutsService.update(id, user.id, updateWorkoutDto, locale);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Deletar um treino' })
+  @ApiParam({ name: 'id', description: 'ID do treino' })
+  @ApiResponse({
+    status: 204,
+    description: 'Treino deletado com sucesso',
+  })
+  @ApiResponse({ status: 404, description: 'Treino não encontrado' })
+  @ApiResponse({ status: 403, description: 'Acesso negado' })
+  async remove(
+    @CurrentUser() user: UserEntity,
+    @Param('id') id: string,
+    @I18nLang() locale: string = 'pt-BR',
+  ): Promise<void> {
+    return this.workoutsService.remove(id, user.id, locale);
   }
 }
 

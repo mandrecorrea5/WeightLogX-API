@@ -62,16 +62,53 @@ export class UserService {
       user.fullName = updateProfileDto.fullName;
     }
 
-    // Convert birthDate from dd/MM/yyyy to Date object
+    // Convert birthDate - aceita ISO 8601 ou formato brasileiro dd/MM/yyyy
     if (updateProfileDto.birthDate) {
-      const [day, month, year] = updateProfileDto.birthDate.split('/');
-      user.birthDate = new Date(`${year}-${month}-${day}`);
+      let date: Date;
+
+      // Tenta parsear como ISO 8601 primeiro (formato mais comum em APIs)
+      if (updateProfileDto.birthDate.includes('T') || updateProfileDto.birthDate.match(/^\d{4}-\d{2}-\d{2}/)) {
+        // ISO 8601: 1984-06-19T00:00:00.000Z ou 1984-06-19
+        date = new Date(updateProfileDto.birthDate);
+      } else if (updateProfileDto.birthDate.includes('/')) {
+        // Formato brasileiro: dd/MM/yyyy
+        const [day, month, year] = updateProfileDto.birthDate.split('/');
+        date = new Date(`${year}-${month}-${day}`);
+      } else {
+        // Tenta parsear como está
+        date = new Date(updateProfileDto.birthDate);
+      }
+
+      // Valida se a data é válida
+      if (isNaN(date.getTime())) {
+        throw new BadRequestException(
+          await this.i18n.translate('validation.dateFormat', { lang: locale }),
+        );
+      }
+
+      user.birthDate = date;
     } else if (updateProfileDto.birthDate === null) {
       user.birthDate = null;
     }
 
+    // Normalizar telefone - remove caracteres não numéricos e formata
     if (updateProfileDto.phone !== undefined) {
-      user.phone = updateProfileDto.phone || null;
+      if (updateProfileDto.phone) {
+        // Remove todos os caracteres não numéricos
+        const phoneDigits = updateProfileDto.phone.replace(/\D/g, '');
+
+        // Valida se tem pelo menos 10 dígitos (DDD + número)
+        if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+          throw new BadRequestException(
+            await this.i18n.translate('validation.phoneFormat', { lang: locale }),
+          );
+        }
+
+        // Salva apenas os dígitos (normalizado)
+        user.phone = phoneDigits;
+      } else {
+        user.phone = null;
+      }
     }
 
     if (updateProfileDto.trainingCenter !== undefined) {

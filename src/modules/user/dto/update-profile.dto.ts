@@ -13,27 +13,21 @@ export class UpdateProfileDto {
   fullName?: string;
 
   @ApiProperty({
-    description: 'Data de nascimento no formato dd/MM/yyyy',
-    example: '15/03/1990',
+    description: 'Data de nascimento (aceita ISO 8601: YYYY-MM-DD ou YYYY-MM-DDTHH:mm:ss.sssZ, ou formato brasileiro: dd/MM/yyyy)',
+    example: '1990-03-15',
     required: false,
   })
   @IsOptional()
   @IsString()
-  @Matches(/^\d{2}\/\d{2}\/\d{4}$/, {
-    message: 'validation.dateFormat',
-  })
   birthDate?: string;
 
   @ApiProperty({
-    description: 'Telefone no formato (XX) XXXXX-XXXX',
-    example: '(31) 98765-4321',
+    description: 'Telefone (aceita vários formatos: apenas números, com parênteses, com hífen, etc.)',
+    example: '31987654321',
     required: false,
   })
   @IsOptional()
   @IsString()
-  @Matches(/^\(\d{2}\)\s\d{5}-\d{4}$/, {
-    message: 'validation.phoneFormat',
-  })
   phone?: string;
 
   @ApiProperty({

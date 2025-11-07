@@ -35,6 +35,22 @@ Response (example profile):
 - `POST /api/user/profile-image` – upload image (multipart/form-data; field `image`)
 - `GET /api/user/permissions` – permissions of current user
 
+**Update profile body:**
+```json
+{
+  "fullName": "João Silva",
+  "birthDate": "1990-03-15T00:00:00.000Z",
+  "phone": "31987654321",
+  "trainingCenter": "Academia XYZ"
+}
+```
+
+**Note:**
+- `birthDate`: Aceita ISO 8601 (`YYYY-MM-DD` ou `YYYY-MM-DDTHH:mm:ss.sssZ`) ou formato brasileiro (`dd/MM/yyyy`)
+- `phone`: Aceita vários formatos (apenas números, com parênteses, hífen, etc.). Será normalizado para apenas dígitos (10-11 dígitos)
+- Todos os campos são opcionais
+- Resposta retorna `birthDate` formatado como `dd/MM/yyyy` e `phone` apenas com dígitos
+
 Admin-only:
 - `PUT /api/user/users/:userId/trainer` – set trainer for athlete; body `{ trainerId: string }`
 - `DELETE /api/user/users/:userId/trainer` – unlink trainer from athlete
@@ -457,11 +473,34 @@ const response = await fetch(`http://localhost:3000/api/exercises/${exerciseId}`
 });
 ```
 
+**5. Update User Profile:**
+```javascript
+const response = await fetch('http://localhost:3000/api/user/profile', {
+  method: 'PUT',
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+    'Accept-Language': 'pt-BR'
+  },
+  body: JSON.stringify({
+    fullName: 'João Silva',
+    birthDate: '1990-03-15T00:00:00.000Z', // ISO 8601 ou '15/03/1990'
+    phone: '31987654321', // Aceita vários formatos: '(31) 98765-4321', '31 98765-4321', etc.
+    trainingCenter: 'Academia XYZ'
+  })
+});
+const profile = await response.json();
+// profile.birthDate retorna como '15/03/1990' (formato brasileiro)
+// profile.phone retorna apenas dígitos: '31987654321'
+```
+
 **Common Mistakes:**
 - ❌ Reports sem `exerciseId` quando `type=exercicio` → 400 Bad Request
 - ❌ Workout update sem campo `config` nos exercícios → 400 Bad Request
 - ❌ Headers faltando `Authorization` → 401 Unauthorized
 - ❌ Body não é JSON válido → 400 Bad Request
+- ❌ Profile update com telefone com menos de 10 dígitos ou mais de 11 → 400 Bad Request
+- ❌ Profile update com data inválida → 400 Bad Request
 
 If anything is missing for your UI flows, open an issue with the exact field/endpoint needed.
 

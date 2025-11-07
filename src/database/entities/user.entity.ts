@@ -8,6 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { RoleEntity } from './role.entity';
+import { TrainingCenterEntity } from '../../modules/training-centers/entities/training-center.entity';
 
 @Entity('users')
 export class UserEntity {
@@ -36,8 +37,15 @@ export class UserEntity {
   @Column({ nullable: true, type: 'varchar' })
   phone: string | null;
 
-  @Column({ name: 'training_center', nullable: true, type: 'varchar' })
-  trainingCenter: string | null;
+  @Column({ name: 'training_center_name', nullable: true, type: 'varchar' })
+  trainingCenterName: string | null;
+
+  @Column({ name: 'training_center_id', type: 'uuid', nullable: true })
+  trainingCenterId: string | null;
+
+  @ManyToOne(() => TrainingCenterEntity, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'training_center_id' })
+  trainingCenter?: TrainingCenterEntity | null;
 
   // Optional trainer reference
   @Column({ name: 'trainer_id', type: 'uuid', nullable: true })

@@ -5,7 +5,13 @@ export class AuthResponseDto {
     email: string;
     birthDate: string | null;
     phone: string | null;
-    trainingCenter: string | null;
+    trainingCenter: {
+      id: string;
+      name: string;
+      abbreviation: string;
+    } | null;
+    trainingCenterId: string | null;
+    trainingCenterName: string | null;
     profileImage: string | null;
   };
   token: string;

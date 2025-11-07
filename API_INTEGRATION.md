@@ -23,6 +23,13 @@ Response (example profile):
   "email": "user@example.com",
   "fullName": "User Name",
   "role": { "id": "<uuid>", "name": "atleta" | "treinador" | "admin" },
+  "trainingCenter": {
+    "id": "a9c34a9c-1234-5678-9012-abcdef123456",
+    "name": "Centro de Levantamento Olímpico do Maranhão",
+    "abbreviation": "CLOMA"
+  },
+  "trainingCenterId": "a9c34a9c-1234-5678-9012-abcdef123456",
+  "trainingCenterName": "Centro de Levantamento Olímpico do Maranhão",
   "trainerId": "<uuid|null>",
   "createdAt": "2025-01-01T12:00:00.000Z",
   "updatedAt": "2025-01-01T12:00:00.000Z"
@@ -41,13 +48,15 @@ Response (example profile):
   "fullName": "João Silva",
   "birthDate": "1990-03-15T00:00:00.000Z",
   "phone": "31987654321",
-  "trainingCenter": "Academia XYZ"
+  "trainingCenterId": "a9c34a9c-1234-5678-9012-abcdef123456"
 }
 ```
 
 **Note:**
 - `birthDate`: Aceita ISO 8601 (`YYYY-MM-DD` ou `YYYY-MM-DDTHH:mm:ss.sssZ`) ou formato brasileiro (`dd/MM/yyyy`)
 - `phone`: Aceita vários formatos (apenas números, com parênteses, hífen, etc.). Será normalizado para apenas dígitos (10-11 dígitos)
+- `trainingCenterId`: Envie o UUID do centro de treinamento (`null` para remover a associação). Para compatibilidade, ainda aceitamos `trainingCenter` (string) – caso usado, o backend armazena apenas o nome e remove o vínculo com a tabela
+- `trainingCenter`: Quando a resposta vier com um objeto `{ id, name, abbreviation }`, significa que o usuário está vinculado a um centro cadastrado em `/api/training-centers`. Os campos `trainingCenterId` e `trainingCenterName` permanecem como fallback legados.
 - Todos os campos são opcionais
 - Resposta retorna `birthDate` formatado como `dd/MM/yyyy` e `phone` apenas com dígitos
 
@@ -142,11 +151,75 @@ Send to trainer response:
 **Note:** Todos os campos são opcionais no update (PATCH/PUT), mas pelo menos um deve ser fornecido.
 
 ### Training Centers
-- `GET /api/training-centers`
-- `POST /api/training-centers`
-- `GET /api/training-centers/:id`
-- `PUT /api/training-centers/:id`
-- `DELETE /api/training-centers/:id`
+- `GET /api/training-centers` – lista centros (suporta `?search=term` para nome/sigla/treinador)
+- `POST /api/training-centers` – cria centro (campos obrigatórios abaixo)
+- `GET /api/training-centers/:id` – detalhes
+- `PUT /api/training-centers/:id` – atualiza centro
+- `DELETE /api/training-centers/:id` – remove centro
+
+**Create training center body:**
+```json
+{
+  "name": "Centro de Levantamento Olímpico do Maranhão",
+  "abbreviation": "CLOMA",
+  "trainerId": "1d23f456-7890-4abc-def1-234567890abc",
+  "nickname": "CLOMA",             // opcional (alias para autocomplete)
+  "address": "Rua das Flores, 123", // opcional
+  "city": "São Luís",               // opcional
+  "state": "MA",                    // opcional
+  "country": "Brasil"               // opcional
+}
+```
+
+**Response:**
+```json
+{
+  "id": "center-uuid",
+  "name": "Centro de Levantamento Olímpico do Maranhão",
+  "abbreviation": "CLOMA",
+  "nickname": "CLOMA",
+  "trainer": {
+    "id": "1d23f456-7890-4abc-def1-234567890abc",
+    "name": "Eduardo Roberto"
+  },
+  "trainerId": "1d23f456-7890-4abc-def1-234567890abc",   // fallback legado
+  "trainerName": "Eduardo Roberto",                     // fallback legado
+  "address": "Rua das Flores, 123",
+  "city": "São Luís",
+  "state": "MA",
+  "country": "Brasil",
+  "createdAt": "2025-01-10T12:00:00.000Z",
+  "updatedAt": "2025-01-10T12:00:00.000Z"
+}
+```
+
+**Notas:**
+- `abbreviation` é obrigatório, normalizado em UPPERCASE e único (case-insensitive)
+- `trainerId` deve apontar para um treinador existente (`POST /api/trainers`)
+- `trainer` retorna objeto completo; `trainerId`/`trainerName` são mantidos para compatibilidade com apps legados
+- Busca (`?search=`) considera nome, sigla, nickname, nome do treinador, cidade e estado
+- Para vincular um usuário a um centro, utilize o `trainingCenterId` no `PUT /api/user/profile`
+
+### Trainers
+- `GET /api/trainers` – lista treinadores (`?search=` opcional)
+- `POST /api/trainers` – cadastra novo treinador
+
+**Create trainer body:**
+```json
+{
+  "name": "Eduardo Roberto"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "1d23f456-7890-4abc-def1-234567890abc",
+  "name": "Eduardo Roberto",
+  "createdAt": "2025-01-10T12:00:00.000Z",
+  "updatedAt": "2025-01-10T12:00:00.000Z"
+}
+```
 
 ### Reports
 - `GET /api/reports?type={geral|exercicio|carga}&timeFilter={7d|30d|3m|1y}&exerciseId={uuid}` – generate workout reports
@@ -486,12 +559,13 @@ const response = await fetch('http://localhost:3000/api/user/profile', {
     fullName: 'João Silva',
     birthDate: '1990-03-15T00:00:00.000Z', // ISO 8601 ou '15/03/1990'
     phone: '31987654321', // Aceita vários formatos: '(31) 98765-4321', '31 98765-4321', etc.
-    trainingCenter: 'Academia XYZ'
+    trainingCenterId: 'a9c34a9c-1234-5678-9012-abcdef123456' // Use null para remover associação
   })
 });
 const profile = await response.json();
 // profile.birthDate retorna como '15/03/1990' (formato brasileiro)
 // profile.phone retorna apenas dígitos: '31987654321'
+// profile.trainingCenter retorna objeto com id, nome e sigla (quando associado)
 ```
 
 **Common Mistakes:**
@@ -501,6 +575,10 @@ const profile = await response.json();
 - ❌ Body não é JSON válido → 400 Bad Request
 - ❌ Profile update com telefone com menos de 10 dígitos ou mais de 11 → 400 Bad Request
 - ❌ Profile update com data inválida → 400 Bad Request
+- ❌ Profile update com `trainingCenterId` inexistente → 404 Not Found
+- ❌ Profile update enviando `trainingCenter` string + `trainingCenterId` → 400 Bad Request (escolha apenas um formato)
+- ❌ Training center sem sigla ou com sigla duplicada → 400/409 Bad Request
+- ❌ Training center com `trainerId` inexistente → 404 Not Found
 
 If anything is missing for your UI flows, open an issue with the exact field/endpoint needed.
 

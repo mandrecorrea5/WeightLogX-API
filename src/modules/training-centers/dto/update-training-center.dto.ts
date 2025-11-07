@@ -1,4 +1,4 @@
-import { IsString, MinLength, IsOptional } from 'class-validator';
+import { IsString, MinLength, IsOptional, Matches } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateTrainingCenterDto {
@@ -11,6 +11,27 @@ export class UpdateTrainingCenterDto {
   @IsString()
   @MinLength(2)
   name?: string;
+
+  @ApiProperty({
+    description: 'Sigla do centro de treinamento',
+    example: 'CTLPOMA',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^[A-Za-z0-9]{2,12}$/, {
+    message: 'validation.abbreviationFormat',
+  })
+  abbreviation?: string;
+
+  @ApiProperty({
+    description: 'Identificador do treinador responsável',
+    example: 'a9c34a9c-1234-5678-9012-abcdef123456',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  trainerId?: string;
 
   @ApiProperty({
     description: 'Apelido do centro de treinamento',

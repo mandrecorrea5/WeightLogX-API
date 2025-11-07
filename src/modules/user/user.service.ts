@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { I18nService } from 'nestjs-i18n';
 import { UserEntity } from '../../database/entities/user.entity';
 import { RoleEntity } from '../../database/entities/role.entity';
+import { TrainingCenterEntity } from '../training-centers/entities/training-center.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ProfileResponseDto } from './dto/profile-response.dto';
@@ -23,13 +24,15 @@ export class UserService {
     private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(RoleEntity)
     private readonly roleRepository: Repository<RoleEntity>,
+    @InjectRepository(TrainingCenterEntity)
+    private readonly trainingCenterRepository: Repository<TrainingCenterEntity>,
     private readonly i18n: I18nService,
   ) { }
 
   async getProfile(userId: string, locale: string = 'pt-BR'): Promise<ProfileResponseDto> {
     const user = await this.userRepository.findOne({
       where: { id: userId },
-      relations: ['role'],
+      relations: ['role', 'trainingCenter'],
     });
 
     if (!user) {
@@ -48,7 +51,7 @@ export class UserService {
   ): Promise<ProfileResponseDto> {
     const user = await this.userRepository.findOne({
       where: { id: userId },
-      relations: ['role'],
+      relations: ['role', 'trainingCenter'],
     });
 
     if (!user) {
@@ -111,8 +114,35 @@ export class UserService {
       }
     }
 
-    if (updateProfileDto.trainingCenter !== undefined) {
-      user.trainingCenter = updateProfileDto.trainingCenter || null;
+    if (updateProfileDto.trainingCenterId !== undefined) {
+      if (updateProfileDto.trainingCenterId === null || updateProfileDto.trainingCenterId === '') {
+        user.trainingCenterId = null;
+        user.trainingCenterName = null;
+        user.trainingCenter = null;
+      } else {
+        const trainingCenter = await this.trainingCenterRepository.findOne({
+          where: { id: updateProfileDto.trainingCenterId },
+        });
+
+        if (!trainingCenter) {
+          throw new NotFoundException(
+            await this.i18n.translate('trainingCenters.notFound', { lang: locale }),
+          );
+        }
+
+        user.trainingCenterId = trainingCenter.id;
+        user.trainingCenterName = trainingCenter.name;
+        user.trainingCenter = trainingCenter;
+      }
+    } else if (updateProfileDto.trainingCenter !== undefined) {
+      const trainingCenterName =
+        updateProfileDto.trainingCenter && updateProfileDto.trainingCenter.trim().length > 0
+          ? updateProfileDto.trainingCenter.trim()
+          : null;
+
+      user.trainingCenterName = trainingCenterName;
+      user.trainingCenterId = null;
+      user.trainingCenter = null;
     }
 
     await this.userRepository.save(user);
@@ -120,7 +150,7 @@ export class UserService {
     // Reload with relations to get updated role
     const reloadedUser = await this.userRepository.findOne({
       where: { id: userId },
-      relations: ['role'],
+      relations: ['role', 'trainingCenter'],
     });
 
     return this.mapUserToProfileResponse(reloadedUser!);
@@ -229,7 +259,7 @@ export class UserService {
   ): Promise<ProfileResponseDto> {
     const user = await this.userRepository.findOne({
       where: { id: userId },
-      relations: ['role'],
+      relations: ['role', 'trainingCenter'],
     });
 
     if (!user) {
@@ -255,7 +285,7 @@ export class UserService {
     // Reload with relations to get updated role
     const reloadedUser = await this.userRepository.findOne({
       where: { id: userId },
-      relations: ['role'],
+      relations: ['role', 'trainingCenter'],
     });
 
     return this.mapUserToProfileResponse(reloadedUser!);
@@ -266,14 +296,14 @@ export class UserService {
     trainerId: string,
     locale: string = 'pt-BR',
   ): Promise<ProfileResponseDto> {
-    const athlete = await this.userRepository.findOne({ where: { id: athleteId }, relations: ['role'] });
+    const athlete = await this.userRepository.findOne({ where: { id: athleteId }, relations: ['role', 'trainingCenter'] });
     if (!athlete) {
       throw new NotFoundException(
         await this.i18n.translate('user.profile.notFound', { lang: locale }),
       );
     }
 
-    const trainer = await this.userRepository.findOne({ where: { id: trainerId }, relations: ['role'] });
+    const trainer = await this.userRepository.findOne({ where: { id: trainerId }, relations: ['role', 'trainingCenter'] });
     if (!trainer) {
       throw new NotFoundException(
         await this.i18n.translate('user.profile.notFound', { lang: locale }),
@@ -283,7 +313,7 @@ export class UserService {
     athlete.trainerId = trainer.id;
     await this.userRepository.save(athlete);
 
-    const reloaded = await this.userRepository.findOne({ where: { id: athleteId }, relations: ['role'] });
+    const reloaded = await this.userRepository.findOne({ where: { id: athleteId }, relations: ['role', 'trainingCenter'] });
     return this.mapUserToProfileResponse(reloaded!);
   }
 
@@ -291,7 +321,7 @@ export class UserService {
     athleteId: string,
     locale: string = 'pt-BR',
   ): Promise<ProfileResponseDto> {
-    const athlete = await this.userRepository.findOne({ where: { id: athleteId }, relations: ['role'] });
+    const athlete = await this.userRepository.findOne({ where: { id: athleteId }, relations: ['role', 'trainingCenter'] });
     if (!athlete) {
       throw new NotFoundException(
         await this.i18n.translate('user.profile.notFound', { lang: locale }),
@@ -301,7 +331,7 @@ export class UserService {
     athlete.trainerId = null;
     await this.userRepository.save(athlete);
 
-    const reloaded = await this.userRepository.findOne({ where: { id: athleteId }, relations: ['role'] });
+    const reloaded = await this.userRepository.findOne({ where: { id: athleteId }, relations: ['role', 'trainingCenter'] });
     return this.mapUserToProfileResponse(reloaded!);
   }
 
@@ -316,6 +346,21 @@ export class UserService {
       birthDateFormatted = `${day}/${month}/${year}`;
     }
 
+    const trainingCenterSummary =
+      user.trainingCenter !== undefined && user.trainingCenter !== null
+        ? {
+          id: user.trainingCenter.id,
+          name: user.trainingCenter.name,
+          abbreviation: user.trainingCenter.abbreviation,
+        }
+        : user.trainingCenterId
+          ? {
+            id: user.trainingCenterId,
+            name: user.trainingCenterName ?? '',
+            abbreviation: null,
+          }
+          : null;
+
     return {
       id: user.id,
       fullName: user.fullName,
@@ -323,7 +368,9 @@ export class UserService {
       role: user.role?.name || 'atleta',
       birthDate: birthDateFormatted,
       phone: user.phone,
-      trainingCenter: user.trainingCenter,
+      trainingCenter: trainingCenterSummary,
+      trainingCenterId: user.trainingCenterId,
+      trainingCenterName: user.trainingCenterName,
       profileImage: user.profileImageUrl,
     };
   }

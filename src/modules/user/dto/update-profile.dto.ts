@@ -1,4 +1,4 @@
-import { IsOptional, IsString, Matches, MinLength } from 'class-validator';
+import { IsOptional, IsString, MinLength, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdateProfileDto {
@@ -38,5 +38,15 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString()
   trainingCenter?: string;
+
+  @ApiProperty({
+    description: 'ID do centro de treinamento associado ao usuário (enviar null para remover)',
+    example: 'a9c34a9c-1234-5678-9012-abcdef123456',
+    required: false,
+    nullable: true,
+  })
+  @IsOptional()
+  @IsUUID('4', { message: 'validation.uuid' })
+  trainingCenterId?: string | null;
 }
 

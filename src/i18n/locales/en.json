@@ -83,17 +83,26 @@
   "trainingCenters": {
     "create": {
       "success": "Training center created successfully",
-      "alreadyExists": "Training center with this name already exists"
+      "alreadyExists": "Training center with this name already exists",
+      "abbreviationExists": "A training center with this abbreviation already exists"
     },
     "update": {
       "success": "Training center updated successfully",
-      "nameConflict": "A training center with this name already exists"
+      "nameConflict": "A training center with this name already exists",
+      "abbreviationConflict": "A training center with this abbreviation already exists"
     },
     "delete": {
       "success": "Training center removed successfully",
       "hasUsers": "Cannot remove training center with associated users"
     },
     "notFound": "Training center not found"
+  },
+  "trainers": {
+    "create": {
+      "success": "Trainer created successfully",
+      "alreadyExists": "A trainer with this name already exists"
+    },
+    "notFound": "Trainer not found"
   },
   "exercise": {
     "snatch": "Snatch",
@@ -119,6 +128,8 @@
     "limit": "Limit must be between 1 and 100",
     "dateFormat": "Invalid date format (dd/MM/yyyy)",
     "phoneFormat": "Invalid phone format ((XX) XXXXX-XXXX)",
+    "uuid": "Value must be a valid UUID",
+    "abbreviationFormat": "Abbreviation must be 2 to 12 alphanumeric characters (no spaces)",
     "password": {
       "mismatch": "Passwords do not match",
       "weak": "Password must contain at least one letter and one number"

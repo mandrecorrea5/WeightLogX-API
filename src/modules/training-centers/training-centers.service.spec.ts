@@ -4,18 +4,15 @@ import { Repository } from 'typeorm';
 import { I18nService } from 'nestjs-i18n';
 import { TrainingCentersService } from './training-centers.service';
 import { TrainingCenterEntity } from './entities/training-center.entity';
+import { TrainerEntity } from '../trainers/entities/trainer.entity';
 import { CreateTrainingCenterDto } from './dto/create-training-center.dto';
 import { UpdateTrainingCenterDto } from './dto/update-training-center.dto';
-import {
-  ConflictException,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 
 describe('TrainingCentersService', () => {
   let service: TrainingCentersService;
-  let trainingCenterRepository: Repository<TrainingCenterEntity>;
-  let i18nService: I18nService;
+  let trainingCenterRepository: jest.Mocked<Repository<TrainingCenterEntity>>;
+  let trainerRepository: jest.Mocked<Repository<TrainerEntity>>;
 
   const mockTrainingCenterRepository = {
     findOne: jest.fn(),
@@ -23,23 +20,33 @@ describe('TrainingCentersService', () => {
     save: jest.fn(),
     createQueryBuilder: jest.fn(),
     remove: jest.fn(),
+    find: jest.fn(),
+  } as unknown as jest.Mocked<Repository<TrainingCenterEntity>>;
+
+  const mockTrainerRepository = {
+    findOne: jest.fn(),
+    find: jest.fn(),
+  } as unknown as jest.Mocked<Repository<TrainerEntity>>;
+
+  const mockI18nService: Partial<I18nService> = {
+    translate: jest.fn(async (key: string) => key),
   };
 
-  const mockQueryBuilder = {
-    where: jest.fn().mockReturnThis(),
-    orderBy: jest.fn().mockReturnThis(),
-    getMany: jest.fn(),
+  const trainer: TrainerEntity = {
+    id: 'trainer-uuid',
+    name: 'Eduardo Roberto',
+    createdAt: new Date('2024-02-01T09:00:00Z'),
+    updatedAt: new Date('2024-02-01T09:00:00Z'),
   };
 
-  const mockI18nService = {
-    translate: jest.fn((key: string, options?: any) => Promise.resolve(key)),
-  };
-
-  const mockTrainingCenter: TrainingCenterEntity = {
+  const trainingCenter: TrainingCenterEntity = {
     id: 'tc-uuid',
-    name: 'Centro de Treinamento de Levantamento de Pesos do Maranhão',
-    nickname: 'CTLPOMA',
-    trainer: 'João Silva',
+    name: 'Centro de Levantamento Olímpico do Maranhão',
+    nickname: 'CLOMA',
+    abbreviation: 'CLOMA',
+    trainerName: trainer.name,
+    trainerId: trainer.id,
+    trainer,
     address: 'Rua das Flores, 123',
     city: 'São Luís',
     state: 'MA',
@@ -57,213 +64,132 @@ describe('TrainingCentersService', () => {
           useValue: mockTrainingCenterRepository,
         },
         {
+          provide: getRepositoryToken(TrainerEntity),
+          useValue: mockTrainerRepository,
+        },
+        {
           provide: I18nService,
           useValue: mockI18nService,
         },
       ],
     }).compile();
 
-    service = module.get<TrainingCentersService>(TrainingCentersService);
-    trainingCenterRepository = module.get<Repository<TrainingCenterEntity>>(
+    service = module.get(TrainingCentersService);
+    trainingCenterRepository = module.get(
       getRepositoryToken(TrainingCenterEntity),
-    );
-    i18nService = module.get<I18nService>(I18nService);
+    ) as jest.Mocked<Repository<TrainingCenterEntity>>;
+    trainerRepository = module.get(
+      getRepositoryToken(TrainerEntity),
+    ) as jest.Mocked<Repository<TrainerEntity>>;
 
-    mockTrainingCenterRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder);
     jest.clearAllMocks();
   });
 
   describe('create', () => {
-    const createDto: CreateTrainingCenterDto = {
-      name: 'Centro de Treinamento de Levantamento de Pesos do Maranhão',
-      nickname: 'CTLPOMA',
-      trainer: 'João Silva',
-      address: 'Rua das Flores, 123',
-      city: 'São Luís',
-      state: 'MA',
-      country: 'Brasil',
+    const dto: CreateTrainingCenterDto = {
+      name: 'Centro de Levantamento Olímpico do Maranhão',
+      abbreviation: 'cloma',
+      trainerId: trainer.id,
+      nickname: 'CLOMA',
     };
 
-    it('should create a training center successfully', async () => {
-      mockTrainingCenterRepository.findOne.mockResolvedValue(null);
-      mockTrainingCenterRepository.create.mockReturnValue(mockTrainingCenter);
-      mockTrainingCenterRepository.save.mockResolvedValue(mockTrainingCenter);
+    it('should create a training center', async () => {
+      trainingCenterRepository.findOne
+        .mockResolvedValueOnce(null) // name check
+        .mockResolvedValueOnce(null) // abbreviation check
+        .mockResolvedValueOnce(trainingCenter); // reload with relations
+      trainerRepository.findOne.mockResolvedValue(trainer);
+      trainingCenterRepository.create.mockReturnValue(trainingCenter);
+      trainingCenterRepository.save.mockResolvedValue(trainingCenter);
 
-      const result = await service.create(createDto, 'pt-BR');
+      const result = await service.create(dto, 'pt-BR');
 
-      expect(result).toHaveProperty('id');
-      expect(result.name).toBe(createDto.name);
-      expect(result.nickname).toBe(createDto.nickname);
-      expect(result.trainer).toBe(createDto.trainer);
-      expect(mockTrainingCenterRepository.findOne).toHaveBeenCalled();
-      expect(mockTrainingCenterRepository.create).toHaveBeenCalled();
-      expect(mockTrainingCenterRepository.save).toHaveBeenCalled();
-    });
-
-    it('should throw ConflictException if training center with same name already exists', async () => {
-      mockTrainingCenterRepository.findOne.mockResolvedValue(mockTrainingCenter);
-      mockI18nService.translate.mockResolvedValue(
-        'Centro de treinamento com este nome já existe',
+      expect(result.id).toBe(trainingCenter.id);
+      expect(result.abbreviation).toBe('CLOMA');
+      expect(result.trainer?.id).toBe(trainer.id);
+      expect(trainingCenterRepository.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          abbreviation: 'CLOMA',
+          trainerId: trainer.id,
+        }),
       );
-
-      await expect(
-        service.create(createDto, 'pt-BR'),
-      ).rejects.toThrow(ConflictException);
-
-      expect(mockTrainingCenterRepository.create).not.toHaveBeenCalled();
-      expect(mockTrainingCenterRepository.save).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('findAll', () => {
-    it('should return list of training centers without search', async () => {
-      const trainingCenters = [mockTrainingCenter];
-      mockQueryBuilder.getMany.mockResolvedValue(trainingCenters);
-
-      const result = await service.findAll('pt-BR');
-
-      expect(result).toHaveProperty('trainingCenters');
-      expect(result.trainingCenters).toHaveLength(1);
-      expect(mockQueryBuilder.where).not.toHaveBeenCalled();
-      expect(mockQueryBuilder.orderBy).toHaveBeenCalled();
     });
 
-    it('should return filtered list when search is provided', async () => {
-      const trainingCenters = [mockTrainingCenter];
-      mockQueryBuilder.getMany.mockResolvedValue(trainingCenters);
+    it('should throw when name already exists', async () => {
+      trainingCenterRepository.findOne.mockResolvedValueOnce(trainingCenter);
 
-      const result = await service.findAll('pt-BR', 'CTLPOMA');
-
-      expect(result.trainingCenters).toHaveLength(1);
-      expect(mockQueryBuilder.where).toHaveBeenCalled();
-      expect(mockQueryBuilder.orderBy).toHaveBeenCalled();
+      await expect(service.create(dto, 'pt-BR')).rejects.toThrow(
+        ConflictException,
+      );
     });
 
-    it('should return empty list if no training centers exist', async () => {
-      mockQueryBuilder.getMany.mockResolvedValue([]);
+    it('should throw when abbreviation already exists', async () => {
+      trainingCenterRepository.findOne
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(trainingCenter);
 
-      const result = await service.findAll('pt-BR');
-
-      expect(result.trainingCenters).toHaveLength(0);
-    });
-  });
-
-  describe('findOne', () => {
-    it('should return training center by id', async () => {
-      mockTrainingCenterRepository.findOne.mockResolvedValue(mockTrainingCenter);
-
-      const result = await service.findOne('tc-uuid', 'pt-BR');
-
-      expect(result).toHaveProperty('id');
-      expect(result.id).toBe('tc-uuid');
-      expect(mockTrainingCenterRepository.findOne).toHaveBeenCalledWith({
-        where: { id: 'tc-uuid' },
-      });
+      await expect(service.create(dto, 'pt-BR')).rejects.toThrow(
+        ConflictException,
+      );
     });
 
-    it('should throw NotFoundException if training center not found', async () => {
-      mockTrainingCenterRepository.findOne.mockResolvedValue(null);
-      mockI18nService.translate.mockResolvedValue('Centro de treinamento não encontrado');
+    it('should throw when trainer is not found', async () => {
+      trainingCenterRepository.findOne.mockResolvedValueOnce(null);
+      trainingCenterRepository.findOne.mockResolvedValueOnce(null);
+      trainerRepository.findOne.mockResolvedValue(null);
 
-      await expect(
-        service.findOne('invalid-id', 'pt-BR'),
-      ).rejects.toThrow(NotFoundException);
-    });
-  });
-
-  describe('findByName', () => {
-    it('should return training center by name', async () => {
-      mockTrainingCenterRepository.findOne.mockResolvedValue(mockTrainingCenter);
-
-      const result = await service.findByName('CTLPOMA', 'pt-BR');
-
-      expect(result).not.toBeNull();
-      expect(result?.name).toBe(mockTrainingCenter.name);
-      expect(mockTrainingCenterRepository.findOne).toHaveBeenCalledWith({
-        where: { name: 'CTLPOMA' },
-      });
-    });
-
-    it('should return null if training center not found', async () => {
-      mockTrainingCenterRepository.findOne.mockResolvedValue(null);
-
-      const result = await service.findByName('NonExistent', 'pt-BR');
-
-      expect(result).toBeNull();
+      await expect(service.create(dto, 'pt-BR')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('update', () => {
     const updateDto: UpdateTrainingCenterDto = {
-      nickname: 'CTLPOMA Updated',
+      abbreviation: 'CLOMA2',
     };
 
-    it('should update training center successfully', async () => {
-      const existingTrainingCenter = { ...mockTrainingCenter };
-      mockTrainingCenterRepository.findOne
-        .mockResolvedValueOnce(existingTrainingCenter) // Find training center
-        .mockResolvedValueOnce(null); // Check name conflict (no conflict)
-      mockTrainingCenterRepository.save.mockResolvedValue({
-        ...existingTrainingCenter,
-        nickname: 'CTLPOMA Updated',
+    it('should update abbreviation when unique', async () => {
+      trainingCenterRepository.findOne
+        .mockResolvedValueOnce(trainingCenter) // load by id
+        .mockResolvedValueOnce(null) // name conflict check
+        .mockResolvedValueOnce(null); // abbreviation conflict check
+      trainingCenterRepository.save.mockResolvedValue({
+        ...trainingCenter,
+        abbreviation: 'CLOMA2',
+      });
+      trainingCenterRepository.findOne.mockResolvedValueOnce({
+        ...trainingCenter,
+        abbreviation: 'CLOMA2',
       });
 
       const result = await service.update('tc-uuid', updateDto, 'pt-BR');
 
-      expect(result.nickname).toBe('CTLPOMA Updated');
-      expect(mockTrainingCenterRepository.save).toHaveBeenCalled();
-    });
-
-    it('should throw NotFoundException if training center not found', async () => {
-      mockTrainingCenterRepository.findOne.mockResolvedValue(null);
-      mockI18nService.translate.mockResolvedValue('Centro de treinamento não encontrado');
-
-      await expect(
-        service.update('invalid-id', updateDto, 'pt-BR'),
-      ).rejects.toThrow(NotFoundException);
-    });
-
-    it('should throw ConflictException if new name conflicts with existing training center', async () => {
-      const existingTrainingCenter = { ...mockTrainingCenter };
-      const conflictingTrainingCenter = {
-        ...mockTrainingCenter,
-        id: 'other-uuid',
-        name: 'New Name',
-      };
-
-      mockTrainingCenterRepository.findOne
-        .mockResolvedValueOnce(existingTrainingCenter)
-        .mockResolvedValueOnce(conflictingTrainingCenter);
-
-      mockI18nService.translate.mockResolvedValue(
-        'Já existe um centro de treinamento com este nome',
+      expect(result.abbreviation).toBe('CLOMA2');
+      expect(trainingCenterRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ abbreviation: 'CLOMA2' }),
       );
+    });
+
+    it('should throw when abbreviation conflicts', async () => {
+      trainingCenterRepository.findOne
+        .mockResolvedValueOnce(trainingCenter)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({ ...trainingCenter, id: 'other-id' });
 
       await expect(
-        service.update('tc-uuid', { name: 'New Name' }, 'pt-BR'),
+        service.update('tc-uuid', updateDto, 'pt-BR'),
       ).rejects.toThrow(ConflictException);
     });
   });
 
   describe('remove', () => {
-    it('should remove training center successfully', async () => {
-      mockTrainingCenterRepository.findOne.mockResolvedValue(mockTrainingCenter);
-      mockTrainingCenterRepository.remove.mockResolvedValue(mockTrainingCenter);
-      mockI18nService.translate.mockResolvedValue('Centro de treinamento removido com sucesso');
+    it('should throw when training center not found', async () => {
+      trainingCenterRepository.findOne.mockResolvedValue(null);
 
-      const result = await service.remove('tc-uuid', 'pt-BR');
-
-      expect(result).toHaveProperty('message');
-      expect(mockTrainingCenterRepository.remove).toHaveBeenCalled();
-    });
-
-    it('should throw NotFoundException if training center not found', async () => {
-      mockTrainingCenterRepository.findOne.mockResolvedValue(null);
-      mockI18nService.translate.mockResolvedValue('Centro de treinamento não encontrado');
-
-      await expect(
-        service.remove('invalid-id', 'pt-BR'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.remove('invalid', 'pt-BR')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

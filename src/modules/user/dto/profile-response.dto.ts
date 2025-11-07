@@ -1,5 +1,26 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+class TrainingCenterSummaryDto {
+  @ApiProperty({
+    description: 'ID do centro de treinamento',
+    example: 'a9c34a9c-1234-5678-9012-abcdef123456',
+  })
+  id: string;
+
+  @ApiProperty({
+    description: 'Nome do centro de treinamento',
+    example: 'Centro de Levantamento Olímpico do Maranhão',
+  })
+  name: string;
+
+  @ApiProperty({
+    description: 'Sigla do centro de treinamento',
+    example: 'CLOMA',
+    nullable: true,
+  })
+  abbreviation: string | null;
+}
+
 export class ProfileResponseDto {
   @ApiProperty({
     description: 'ID do usuário',
@@ -41,11 +62,25 @@ export class ProfileResponseDto {
   phone: string | null;
 
   @ApiProperty({
-    description: 'Centro de treinamento',
-    example: 'Academia XYZ',
+    description: 'Centro de treinamento associado ao usuário',
+    type: TrainingCenterSummaryDto,
     nullable: true,
   })
-  trainingCenter: string | null;
+  trainingCenter: TrainingCenterSummaryDto | null;
+
+  @ApiProperty({
+    description: 'ID do centro de treinamento (fallback legado)',
+    example: 'a9c34a9c-1234-5678-9012-abcdef123456',
+    nullable: true,
+  })
+  trainingCenterId: string | null;
+
+  @ApiProperty({
+    description: 'Nome do centro de treinamento (fallback legado)',
+    example: 'Centro de Levantamento Olímpico do Maranhão',
+    nullable: true,
+  })
+  trainingCenterName: string | null;
 
   @ApiProperty({
     description: 'URL da imagem de perfil',

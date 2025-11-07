@@ -14,18 +14,44 @@ export class TrainingCenterResponseDto {
   name: string;
 
   @ApiProperty({
-    description: 'Apelido do centro de treinamento',
+    description: 'Sigla do centro de treinamento',
+    example: 'CTLPOMA',
+  })
+  abbreviation: string;
+
+  @ApiProperty({
+    description: 'Apelido do centro de treinamento (opcional)',
     example: 'CTLPOMA',
     nullable: true,
   })
   nickname: string | null;
 
   @ApiProperty({
-    description: 'Nome do treinador',
+    description: 'Treinador responsável',
+    example: {
+      id: 'trainer-uuid',
+      name: 'João Silva',
+    },
+    nullable: true,
+  })
+  trainer: {
+    id: string;
+    name: string;
+  } | null;
+
+  @ApiProperty({
+    description: 'Identificador do treinador (fallback legacy)',
+    example: 'trainer-uuid',
+    nullable: true,
+  })
+  trainerId: string | null;
+
+  @ApiProperty({
+    description: 'Nome do treinador (fallback legacy)',
     example: 'João Silva',
     nullable: true,
   })
-  trainer: string | null;
+  trainerName: string | null;
 
   @ApiProperty({
     description: 'Endereço',

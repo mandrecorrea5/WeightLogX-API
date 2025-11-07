@@ -25,8 +25,6 @@ import { CreateTrainingCenterDto } from './dto/create-training-center.dto';
 import { UpdateTrainingCenterDto } from './dto/update-training-center.dto';
 import { TrainingCenterResponseDto } from './dto/training-center-response.dto';
 import { TrainingCenterListResponseDto } from './dto/training-center-list-response.dto';
-import { Public } from '../../common/decorators/public.decorator';
-
 @ApiTags('training-centers')
 @Controller('training-centers')
 export class TrainingCentersController {
@@ -45,7 +43,7 @@ export class TrainingCentersController {
   })
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
   @ApiResponse({ status: 409, description: 'Centro de treinamento já existe' })
-  @Public()
+  @ApiBearerAuth('JWT-auth')
   async create(
     @Body() createTrainingCenterDto: CreateTrainingCenterDto,
     @I18nLang() locale: string,
@@ -67,7 +65,7 @@ export class TrainingCentersController {
     description: 'Lista de centros de treinamento',
     type: TrainingCenterListResponseDto,
   })
-  @Public()
+  @ApiBearerAuth('JWT-auth')
   async findAll(
     @Query('search') search?: string,
     @I18nLang() locale: string = 'pt-BR',
@@ -85,7 +83,7 @@ export class TrainingCentersController {
     type: TrainingCenterResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Centro de treinamento não encontrado' })
-  @Public()
+  @ApiBearerAuth('JWT-auth')
   async findOne(
     @Param('id') id: string,
     @I18nLang() locale: string,

@@ -4,7 +4,10 @@ import {
   PrimaryGeneratedColumn,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
+import { TrainerEntity } from '../../trainers/entities/trainer.entity';
 
 @Entity('training_centers')
 export class TrainingCenterEntity {
@@ -17,8 +20,18 @@ export class TrainingCenterEntity {
   @Column({ name: 'nickname', type: 'varchar', nullable: true })
   nickname: string | null;
 
+  @Column({ name: 'abbreviation', type: 'varchar', unique: true })
+  abbreviation: string;
+
   @Column({ name: 'trainer', type: 'varchar', nullable: true })
-  trainer: string | null;
+  trainerName: string | null;
+
+  @Column({ name: 'trainer_id', type: 'uuid', nullable: true })
+  trainerId: string | null;
+
+  @ManyToOne(() => TrainerEntity, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'trainer_id' })
+  trainer?: TrainerEntity | null;
 
   @Column({ name: 'address', type: 'varchar', nullable: true })
   address: string | null;

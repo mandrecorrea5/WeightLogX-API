@@ -9,6 +9,7 @@ import { UserEntity } from '../../database/entities/user.entity';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { RoleEntity } from '../../database/entities/role.entity';
+import { TrainingCenterEntity } from '../training-centers/entities/training-center.entity';
 
 // Mock bcrypt module
 jest.mock('bcrypt');
@@ -19,14 +20,20 @@ describe('UserService', () => {
   let userRepository: Repository<UserEntity>;
   let i18nService: I18nService;
 
-  const mockUser: UserEntity = {
+  const mockUser: any = {
     id: 'user-uuid',
     email: 'user@example.com',
     fullName: 'User Test',
     passwordHash: 'hashedPassword',
     birthDate: null,
     phone: null,
+    trainingCenterName: null,
+    trainingCenterId: null,
     trainingCenter: null,
+    trainerId: null,
+    trainer: null,
+    roleId: 'role-uuid',
+    role: { id: 'role-uuid', name: 'atleta' },
     profileImageUrl: null,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -35,6 +42,10 @@ describe('UserService', () => {
   const mockUserRepository = {
     findOne: jest.fn(),
     save: jest.fn(),
+  };
+
+  const mockTrainingCenterRepository = {
+    findOne: jest.fn(),
   };
 
   const mockI18nService = {
@@ -48,6 +59,10 @@ describe('UserService', () => {
         {
           provide: getRepositoryToken(UserEntity),
           useValue: mockUserRepository,
+        },
+        {
+          provide: getRepositoryToken(TrainingCenterEntity),
+          useValue: mockTrainingCenterRepository,
         },
         {
           provide: I18nService,
@@ -81,6 +96,7 @@ describe('UserService', () => {
       expect(result).toHaveProperty('fullName', 'User Test');
       expect(mockUserRepository.findOne).toHaveBeenCalledWith({
         where: { id: 'user-uuid' },
+        relations: ['role', 'trainingCenter'],
       });
     });
 
@@ -118,22 +134,28 @@ describe('UserService', () => {
 
     it('should update user profile successfully', async () => {
       const userToUpdate = { ...mockUser };
-      mockUserRepository.findOne.mockResolvedValue(userToUpdate);
-      mockUserRepository.save.mockImplementation(async (user) => {
-        // Simula o que o service faz - a conversão já foi feita pelo service
-        // O service converte '15/03/1990' para Date, então precisamos retornar uma data
-        user.birthDate = new Date(1990, 2, 15); // Month is 0-indexed
-        user.phone = updateDto.phone;
-        user.trainingCenter = updateDto.trainingCenter;
-        return user;
-      });
+      const reloadedUser = {
+        ...userToUpdate,
+        birthDate: new Date(1990, 2, 15),
+        phone: '31987654321',
+        trainingCenterName: 'Academia XYZ',
+        trainingCenterId: null,
+        trainingCenter: null,
+      };
+      mockUserRepository.findOne
+        .mockResolvedValueOnce(userToUpdate)
+        .mockResolvedValueOnce(reloadedUser);
+      mockUserRepository.save.mockResolvedValue(userToUpdate);
 
       const result = await service.updateProfile('user-uuid', updateDto, 'pt-BR');
 
       expect(result.birthDate).toBe('15/03/1990');
-      expect(result.phone).toBe(updateDto.phone);
-      expect(result.trainingCenter).toBe(updateDto.trainingCenter);
+      expect(result.phone).toBe('31987654321');
+      expect(result.trainingCenter).toBeNull();
+      expect(result.trainingCenterName).toBe('Academia XYZ');
+      expect(result.trainingCenterId).toBeNull();
       expect(mockUserRepository.save).toHaveBeenCalled();
+      expect(mockTrainingCenterRepository.findOne).not.toHaveBeenCalled();
     });
 
     it('should throw NotFoundException if user not found', async () => {
@@ -148,11 +170,14 @@ describe('UserService', () => {
 
     it('should handle partial updates', async () => {
       const userToUpdate = { ...mockUser };
-      mockUserRepository.findOne.mockResolvedValue(userToUpdate);
-      mockUserRepository.save.mockImplementation(async (user) => {
-        user.phone = '(31) 98765-4321';
-        return user;
-      });
+      const reloadedUser = {
+        ...userToUpdate,
+        phone: '31987654321',
+      };
+      mockUserRepository.findOne
+        .mockResolvedValueOnce(userToUpdate)
+        .mockResolvedValueOnce(reloadedUser);
+      mockUserRepository.save.mockResolvedValue(userToUpdate);
 
       const partialUpdate: UpdateProfileDto = {
         phone: '(31) 98765-4321',
@@ -164,7 +189,7 @@ describe('UserService', () => {
         'pt-BR',
       );
 
-      expect(result.phone).toBe('(31) 98765-4321');
+      expect(result.phone).toBe('31987654321');
       expect(result.birthDate).toBeNull();
     });
   });
@@ -275,6 +300,7 @@ describe('UserService (trainer linkage)', () => {
         UserService,
         { provide: getRepositoryToken(UserEntity), useValue: createRepoMock<UserEntity>() },
         { provide: getRepositoryToken(RoleEntity), useValue: createRepoMock<RoleEntity>() },
+        { provide: getRepositoryToken(TrainingCenterEntity), useValue: createRepoMock<TrainingCenterEntity>() },
         { provide: I18nService, useValue: { translate: jest.fn().mockResolvedValue('msg') } },
       ],
     }).compile();

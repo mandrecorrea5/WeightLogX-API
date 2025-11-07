@@ -19,6 +19,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { MetricsInterceptor } from './modules/metrics/metrics.interceptor';
+import { TrainersModule } from './modules/trainers/trainers.module';
 
 // Rate limiting configuration
 // Development: 100 requests/minute, Production: 60 requests/minute
@@ -43,6 +44,7 @@ const throttleConfig = {
     PrsModule,
     ReportsModule,
     ExercisesModule,
+    TrainersModule,
     TrainingCentersModule,
     MetricsModule,
     HealthModule,

@@ -83,17 +83,26 @@
   "trainingCenters": {
     "create": {
       "success": "Centro de treinamento criado com sucesso",
-      "alreadyExists": "Centro de treinamento com este nome já existe"
+      "alreadyExists": "Centro de treinamento com este nome já existe",
+      "abbreviationExists": "Já existe um centro de treinamento com esta sigla"
     },
     "update": {
       "success": "Centro de treinamento atualizado com sucesso",
-      "nameConflict": "Já existe um centro de treinamento com este nome"
+      "nameConflict": "Já existe um centro de treinamento com este nome",
+      "abbreviationConflict": "Já existe um centro de treinamento com esta sigla"
     },
     "delete": {
       "success": "Centro de treinamento removido com sucesso",
       "hasUsers": "Não é possível remover centro de treinamento com usuários associados"
     },
     "notFound": "Centro de treinamento não encontrado"
+  },
+  "trainers": {
+    "create": {
+      "success": "Treinador criado com sucesso",
+      "alreadyExists": "Já existe um treinador com este nome"
+    },
+    "notFound": "Treinador não encontrado"
   },
   "exercise": {
     "snatch": "Arranco",
@@ -119,6 +128,8 @@
     "limit": "O limite deve ser entre 1 e 100",
     "dateFormat": "Formato de data inválido (dd/MM/yyyy)",
     "phoneFormat": "Formato de telefone inválido ((XX) XXXXX-XXXX)",
+    "uuid": "Valor deve ser um UUID válido",
+    "abbreviationFormat": "A sigla deve conter de 2 a 12 caracteres alfanuméricos (sem espaços)",
     "password": {
       "mismatch": "As senhas não coincidem",
       "weak": "Senha deve conter pelo menos uma letra e um número"

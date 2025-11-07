@@ -20,14 +20,17 @@ describe('JwtStrategy', () => {
     get: jest.fn(),
   };
 
-  const mockUser: UserEntity = {
+  const mockUser: any = {
     id: 'user-uuid',
     email: 'test@example.com',
     fullName: 'Test User',
     passwordHash: 'hashedPassword',
     birthDate: null,
     phone: null,
+    trainingCenterName: null,
+    trainingCenterId: null,
     trainingCenter: null,
+    role: { id: 'role-uuid', name: 'atleta' },
     profileImageUrl: null,
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -100,6 +103,7 @@ describe('JwtStrategy', () => {
       expect(result).toEqual(mockUser);
       expect(mockUserRepository.findOne).toHaveBeenCalledWith({
         where: { id: payload.sub },
+        relations: ['role', 'trainingCenter'],
       });
     });
 

@@ -1,0 +1,58 @@
+flowchart LR
+    subgraph Client Side
+        UI[Aplicativos Web/Mobile]
+    end
+
+    subgraph Backend[WeightLogX API]
+        APIGateway[Prefixo /api]
+        Auth[AuthModule \n JWT + Throttler]
+        User[UserModule]
+        Workouts[WorkoutsModule]
+        PRs[PrsModule]
+        Reports[ReportsModule]
+        Exercises[ExercisesModule]
+        Trainers[TrainersModule]
+        TrainingCenters[TrainingCentersModule]
+        Notifications[NotificationsModule]
+        Metrics[MetricsModule]
+        Health[HealthModule]
+    end
+
+    subgraph Infra[Serviços de Suporte]
+        DB[(PostgreSQL)]
+        Files[(Uploads \n /uploads/profiles)]
+        Prometheus[Prometheus]
+        Grafana[Grafana]
+        Loki[Loki/Promtail]
+        Email[Canal de Email \n (futuro)]
+    end
+
+    UI -->|HTTPS + JWT| APIGateway
+    APIGateway --> Auth
+    APIGateway --> User
+    APIGateway --> Workouts
+    APIGateway --> PRs
+    APIGateway --> Reports
+    APIGateway --> Exercises
+    APIGateway --> Trainers
+    APIGateway --> TrainingCenters
+    APIGateway --> Notifications
+    APIGateway --> Metrics
+    APIGateway --> Health
+
+    Auth --> DB
+    User --> DB
+    Workouts --> DB
+    PRs --> DB
+    Reports --> DB
+    Exercises --> DB
+    Trainers --> DB
+    TrainingCenters --> DB
+    Notifications --> DB
+
+    Notifications --> Email
+    Notifications --> Loki
+
+    Metrics --> Prometheus
+    Prometheus --> Grafana
+    Loki --> Grafana

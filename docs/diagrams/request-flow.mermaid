@@ -1,0 +1,19 @@
+graph TD
+    Start[Requisição REST /api] --> Guard{JWT válido?}
+    Guard -->|Não| PublicCheck{Decorator @Public?}
+    PublicCheck -->|Sim| Controller[Controller específico]
+    PublicCheck -->|Não| AuthError[401 Unauthorized]
+
+    Guard -->|Sim| Controller
+    Controller --> Pipes[ValidationPipe]
+    Pipes --> Service[Service do módulo]
+    Service --> Repo[TypeORM Repository]
+    Repo --> Database[(PostgreSQL)]
+
+    Service -->|Eventos| NotificationsService
+    NotificationsService --> DeviceTokens[(device_tokens)]
+    NotificationsService --> NotificationSettings[(notification_settings)]
+
+    Controller --> MetricsInterceptor[MetricsInterceptor]
+    MetricsInterceptor --> PromClient[prom-client]
+    PromClient --> MetricsEndpoint[/api/metrics/]

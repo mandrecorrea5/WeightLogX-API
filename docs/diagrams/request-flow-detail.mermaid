@@ -1,0 +1,178 @@
+flowchart TD
+    API["API Gateway (/api)"]
+
+    subgraph Core [Core]
+        AppCtrl[AppController]
+        API --> AppCtrl
+        AppCtrl --> RootHello["GET /"]
+        RootHello --> AppService[(AppService)]
+    end
+
+    subgraph AuthModule [Auth Module]
+        AuthCtrl[AuthController]
+        AuthService[(AuthService)]
+        API --> AuthCtrl
+        AuthCtrl --> AuthRegister["POST /auth/register"]
+        AuthRegister --> AuthService
+        AuthCtrl --> AuthLogin["POST /auth/login"]
+        AuthLogin --> AuthService
+        AuthCtrl --> AuthForgot["POST /auth/forgot-password"]
+        AuthForgot --> AuthService
+        AuthCtrl --> AuthReset["POST /auth/reset-password"]
+        AuthReset --> AuthService
+    end
+
+    subgraph UserModule [User Module]
+        UserCtrl[UserController]
+        UserService[(UserService)]
+        PermissionsService[(PermissionsService)]
+        API --> UserCtrl
+        UserCtrl --> UserGetProfile["GET /user/profile"]
+        UserGetProfile --> UserService
+        UserCtrl --> UserUpdateProfile["PUT /user/profile"]
+        UserUpdateProfile --> UserService
+        UserCtrl --> UserChangePassword["PUT /user/password"]
+        UserChangePassword --> UserService
+        UserCtrl --> UserUploadImage["POST /user/profile-image"]
+        UserUploadImage --> UserService
+        UserCtrl --> UserDeleteImage["DELETE /user/profile-image"]
+        UserDeleteImage --> UserService
+        UserCtrl --> UserPermissions["GET /user/permissions"]
+        UserPermissions --> PermissionsService
+        UserCtrl --> UserUpdateRole["PUT /user/users/:userId/role"]
+        UserUpdateRole --> UserService
+        UserCtrl --> UserSetTrainer["PUT /user/users/:userId/trainer"]
+        UserSetTrainer --> UserService
+        UserCtrl --> UserRemoveTrainer["DELETE /user/users/:userId/trainer"]
+        UserRemoveTrainer --> UserService
+    end
+
+    subgraph WorkoutsModule [Workouts Module]
+        WorkoutsCtrl[WorkoutsController]
+        WorkoutsService[(WorkoutsService)]
+        API --> WorkoutsCtrl
+        WorkoutsCtrl --> WorkoutsCreate["POST /workouts"]
+        WorkoutsCreate --> WorkoutsService
+        WorkoutsCtrl --> WorkoutsList["GET /workouts"]
+        WorkoutsList --> WorkoutsService
+        WorkoutsCtrl --> WorkoutsGetOne["GET /workouts/:id"]
+        WorkoutsGetOne --> WorkoutsService
+        WorkoutsCtrl --> WorkoutsUpdate["PUT /workouts/:id"]
+        WorkoutsUpdate --> WorkoutsService
+        WorkoutsCtrl --> WorkoutsSendTrainer["PUT /workouts/:id/send-to-trainer"]
+        WorkoutsSendTrainer --> WorkoutsService
+        WorkoutsCtrl --> WorkoutsDelete["DELETE /workouts/:id"]
+        WorkoutsDelete --> WorkoutsService
+    end
+
+    subgraph PrsModule [PRs Module]
+        PrsCtrl[PrsController]
+        PrsService[(PrsService)]
+        API --> PrsCtrl
+        PrsCtrl --> PrsList["GET /prs"]
+        PrsList --> PrsService
+    end
+
+    subgraph ReportsModule [Reports Module]
+        ReportsCtrl[ReportsController]
+        ReportsService[(ReportsService)]
+        API --> ReportsCtrl
+        ReportsCtrl --> ReportsGenerate["GET /reports"]
+        ReportsGenerate --> ReportsService
+    end
+
+    subgraph ExercisesModule [Exercises Module]
+        ExercisesCtrl[ExercisesController]
+        ExercisesService[(ExercisesService)]
+        API --> ExercisesCtrl
+        ExercisesCtrl --> ExercisesCreate["POST /exercises"]
+        ExercisesCreate --> ExercisesService
+        ExercisesCtrl --> ExercisesList["GET /exercises"]
+        ExercisesList --> ExercisesService
+        ExercisesCtrl --> ExercisesGetOne["GET /exercises/:id"]
+        ExercisesGetOne --> ExercisesService
+        ExercisesCtrl --> ExercisesPut["PUT /exercises/:id"]
+        ExercisesPut --> ExercisesService
+        ExercisesCtrl --> ExercisesPatch["PATCH /exercises/:id"]
+        ExercisesPatch --> ExercisesService
+        ExercisesCtrl --> ExercisesDelete["DELETE /exercises/:id"]
+        ExercisesDelete --> ExercisesService
+    end
+
+    subgraph TrainingCentersModule [Training Centers Module]
+        TrainingCentersCtrl[TrainingCentersController]
+        TrainingCentersService[(TrainingCentersService)]
+        API --> TrainingCentersCtrl
+        TrainingCentersCtrl --> TrainingCentersCreate["POST /training-centers"]
+        TrainingCentersCreate --> TrainingCentersService
+        TrainingCentersCtrl --> TrainingCentersList["GET /training-centers"]
+        TrainingCentersList --> TrainingCentersService
+        TrainingCentersCtrl --> TrainingCentersGetOne["GET /training-centers/:id"]
+        TrainingCentersGetOne --> TrainingCentersService
+        TrainingCentersCtrl --> TrainingCentersUpdate["PUT /training-centers/:id"]
+        TrainingCentersUpdate --> TrainingCentersService
+        TrainingCentersCtrl --> TrainingCentersDelete["DELETE /training-centers/:id"]
+        TrainingCentersDelete --> TrainingCentersService
+    end
+
+    subgraph TrainersModule [Trainers Module]
+        TrainersCtrl[TrainersController]
+        TrainersService[(TrainersService)]
+        API --> TrainersCtrl
+        TrainersCtrl --> TrainersCreate["POST /trainers"]
+        TrainersCreate --> TrainersService
+        TrainersCtrl --> TrainersList["GET /trainers"]
+        TrainersList --> TrainersService
+    end
+
+    subgraph NotificationsModule [Notifications Module]
+        NotificationsCtrl[NotificationsController]
+        DeviceTokensCtrl[DeviceTokensController]
+        NotificationsSvc[(NotificationsService)]
+        API --> NotificationsCtrl
+        API --> DeviceTokensCtrl
+        NotificationsCtrl --> NotificationsList["GET /notifications"]
+        NotificationsList --> NotificationsSvc
+        NotificationsCtrl --> NotificationsMarkRead["PATCH /notifications/:id/read"]
+        NotificationsMarkRead --> NotificationsSvc
+        NotificationsCtrl --> NotificationsMarkAll["PATCH /notifications/read-all"]
+        NotificationsMarkAll --> NotificationsSvc
+        NotificationsCtrl --> NotificationsGetSettings["GET /notifications/settings"]
+        NotificationsGetSettings --> NotificationsSvc
+        NotificationsCtrl --> NotificationsUpdateSettings["PATCH /notifications/settings"]
+        NotificationsUpdateSettings --> NotificationsSvc
+        DeviceTokensCtrl --> DeviceTokenRegister["POST /notifications/device-tokens"]
+        DeviceTokenRegister --> NotificationsSvc
+        DeviceTokensCtrl --> DeviceTokenDelete["DELETE /notifications/device-tokens/:deviceToken"]
+        DeviceTokenDelete --> NotificationsSvc
+    end
+
+    subgraph MetricsModule [Metrics Module]
+        MetricsCtrl[MetricsController]
+        MetricsService[(MetricsService)]
+        API --> MetricsCtrl
+        MetricsCtrl --> MetricsEndpoint["GET /metrics"]
+        MetricsEndpoint --> MetricsService
+    end
+
+    subgraph HealthModule [Health Module]
+        HealthCtrl[HealthController]
+        HealthCheckService[(HealthCheckService)]
+        DbIndicator[(TypeOrmHealthIndicator)]
+        DiskIndicator[(DiskHealthIndicator)]
+        MemoryIndicator[(MemoryHealthIndicator)]
+        API --> HealthCtrl
+        HealthCtrl --> HealthMain["GET /health"]
+        HealthMain --> HealthCheckService
+        HealthCtrl --> HealthLiveness["GET /health/liveness"]
+        HealthLiveness --> HealthCheckService
+        HealthCtrl --> HealthReadiness["GET /health/readiness"]
+        HealthReadiness --> HealthCheckService
+        HealthCheckService --> DbIndicator
+        HealthCheckService --> DiskIndicator
+        HealthCheckService --> MemoryIndicator
+    end
+
+    WorkoutsService -. "Atualiza PRs" .-> PrsService
+    WorkoutsService -. "Envia notificações" .-> NotificationsSvc
+    PrsService -. "Notifica novos PRs" .-> NotificationsSvc

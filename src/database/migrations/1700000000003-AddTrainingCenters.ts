@@ -85,4 +85,3 @@ export class AddTrainingCenters1700000000003 implements MigrationInterface {
     await queryRunner.dropTable('training_centers', true);
   }
 }
-

@@ -47,4 +47,3 @@
 //     console.log('⚠️  OpenTelemetry not installed. Tracing disabled.');
 //   }
 // }
-

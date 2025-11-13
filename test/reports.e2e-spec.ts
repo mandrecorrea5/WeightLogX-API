@@ -14,14 +14,12 @@ describe('Reports (e2e)', () => {
     testEmail = `reports-test-${Date.now()}@example.com`;
     const password = 'Test123!@#';
 
-    await request(app.getHttpServer())
-      .post('/api/auth/register')
-      .send({
-        email: testEmail,
-        password,
-        confirmPassword: password,
-        fullName: 'Reports Test User',
-      });
+    await request(app.getHttpServer()).post('/api/auth/register').send({
+      email: testEmail,
+      password,
+      confirmPassword: password,
+      fullName: 'Reports Test User',
+    });
 
     const loginResponse = await request(app.getHttpServer())
       .post('/api/auth/login')
@@ -142,4 +140,3 @@ describe('Reports (e2e)', () => {
     });
   });
 });
-

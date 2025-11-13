@@ -4,23 +4,50 @@
       "success": "Conta criada com sucesso",
       "emailExists": "Email já cadastrado",
       "invalidData": "Dados inválidos",
-      "roleNotFound": "Role padrão não encontrada no sistema"
+      "roleNotFound": "Role padrão não encontrada no sistema",
+      "phoneRequired": "Telefone inválido. Informe apenas dígitos.",
+      "phoneExists": "Telefone já cadastrado.",
+      "pendingExists": "Já existe um registro pendente para este email. Verifique sua caixa de entrada ou solicite um novo código.",
+      "pending": "Registro pendente de confirmação.",
+      "pendingNotFound": "Nenhum registro pendente encontrado para este email.",
+      "resendSuccess": "Novo código enviado.",
+      "resendLimit": "Limite de reenvio atingido. Tente novamente mais tarde.",
+      "alreadyConfirmed": "Usuário já confirmado. Faça login.",
+      "confirmed": "Conta confirmada com sucesso.",
+      "verificationNotFound": "Nenhuma verificação pendente para este usuário.",
+      "invalidVerificationId": "Identificador de verificação inválido.",
+      "invalidMethod": "Método de verificação inválido para este registro.",
+      "codeExpired": "Código expirado. Solicite um novo envio.",
+      "codeInvalid": "Código inválido.",
+      "invalidBirthDate": "Data de nascimento inválida."
     },
     "login": {
       "invalidCredentials": "Credenciais inválidas",
-      "invalidData": "Dados inválidos"
+      "invalidData": "Dados inválidos",
+      "pending": "Conta pendente de confirmação. Verifique seu email ou SMS."
     },
     "forgotPassword": {
-      "success": "Link de recuperação enviado para o email",
+      "success": "Se o email estiver cadastrado, você receberá um código de verificação.",
       "emailNotFound": "Email não encontrado",
-      "invalidEmail": "Email inválido"
+      "invalidEmail": "Email inválido",
+      "resendSuccess": "Novo código enviado.",
+      "resendLimit": "Limite de reenvio atingido. Tente novamente mais tarde.",
+      "verificationNotFound": "Nenhuma verificação pendente para este usuário.",
+      "invalidVerificationId": "Identificador de verificação inválido.",
+      "invalidMethod": "Método de verificação inválido.",
+      "codeExpired": "Código expirado. Solicite um novo envio.",
+      "codeInvalid": "Código inválido.",
+      "codeVerified": "Código verificado. Agora você pode redefinir sua senha.",
+      "phoneRequired": "Telefone obrigatório para envio via SMS.",
+      "userNotFound": "Usuário não encontrado."
     },
     "resetPassword": {
       "success": "Senha alterada com sucesso",
       "invalidToken": "Token de redefinição inválido",
       "tokenExpired": "Token de redefinição expirado. Solicite um novo link",
       "tokenAlreadyUsed": "Este token já foi utilizado. Solicite um novo link",
-      "invalidData": "Dados inválidos"
+      "invalidData": "Dados inválidos",
+      "codeNotVerified": "Código de verificação não foi validado. Por favor, valide o código primeiro."
     }
   },
   "user": {
@@ -53,7 +80,8 @@
       "invalidConfig": "A configuração de séries deve ser um array"
     },
     "update": {
-      "success": "Treino atualizado com sucesso"
+      "success": "Treino atualizado com sucesso",
+      "noFields": "É necessário fornecer pelo menos a data ou os exercícios para atualizar o treino"
     },
     "notFound": "Treino não encontrado",
     "forbidden": "Você não tem permissão para acessar este treino"

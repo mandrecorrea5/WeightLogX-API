@@ -43,7 +43,8 @@ export class MetricWithVariationDto {
 
 export class ReportsResponseDto {
   @ApiProperty({
-    description: 'Evolução Média Geral (volume médio por treino) com variação e gráfico',
+    description:
+      'Evolução Média Geral (volume médio por treino) com variação e gráfico',
     type: MetricWithVariationDto,
   })
   evolucaoMediaGeral: MetricWithVariationDto;
@@ -69,7 +70,8 @@ export class ReportsResponseDto {
   quantidadeTreinos: number;
 
   @ApiProperty({
-    description: 'Dados para gráfico de linha (mês a mês) - Evolução Média Geral',
+    description:
+      'Dados para gráfico de linha (mês a mês) - Evolução Média Geral',
     type: [GraphDataPointDto],
   })
   @IsArray()
@@ -77,4 +79,3 @@ export class ReportsResponseDto {
   @Type(() => GraphDataPointDto)
   graphData: GraphDataPointDto[];
 }
-

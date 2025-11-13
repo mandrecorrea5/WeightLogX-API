@@ -6,10 +6,7 @@ import { ExercisesService } from './exercises.service';
 import { ExerciseEntity } from './entities/exercise.entity';
 import { CreateExerciseDto } from './dto/create-exercise.dto';
 import { UpdateExerciseDto } from './dto/update-exercise.dto';
-import {
-  ConflictException,
-  NotFoundException,
-} from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 
 describe('ExercisesService', () => {
   let service: ExercisesService;
@@ -74,7 +71,9 @@ describe('ExercisesService', () => {
       mockExerciseRepository.findOne.mockResolvedValue(null);
       mockExerciseRepository.create.mockReturnValue(mockExercise);
       mockExerciseRepository.save.mockResolvedValue(mockExercise);
-      mockI18nService.translate.mockResolvedValue('Exercício criado com sucesso');
+      mockI18nService.translate.mockResolvedValue(
+        'Exercício criado com sucesso',
+      );
 
       const result = await service.create(createExerciseDto, 'pt-BR');
 
@@ -92,9 +91,9 @@ describe('ExercisesService', () => {
         'Exercício com este nome já existe',
       );
 
-      await expect(
-        service.create(createExerciseDto, 'pt-BR'),
-      ).rejects.toThrow(ConflictException);
+      await expect(service.create(createExerciseDto, 'pt-BR')).rejects.toThrow(
+        ConflictException,
+      );
 
       expect(mockExerciseRepository.findOne).toHaveBeenCalled();
       expect(mockExerciseRepository.create).not.toHaveBeenCalled();
@@ -141,9 +140,9 @@ describe('ExercisesService', () => {
       mockExerciseRepository.findOne.mockResolvedValue(null);
       mockI18nService.translate.mockResolvedValue('Exercício não encontrado');
 
-      await expect(
-        service.findOne('invalid-id', 'pt-BR'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('invalid-id', 'pt-BR')).rejects.toThrow(
+        NotFoundException,
+      );
 
       expect(mockExerciseRepository.findOne).toHaveBeenCalled();
     });
@@ -164,7 +163,11 @@ describe('ExercisesService', () => {
         namePtBr: 'Arranco Atualizado',
       });
 
-      const result = await service.update('exercise-uuid', updateExerciseDto, 'pt-BR');
+      const result = await service.update(
+        'exercise-uuid',
+        updateExerciseDto,
+        'pt-BR',
+      );
 
       expect(result.namePtBr).toBe('Arranco Atualizado');
       expect(mockExerciseRepository.save).toHaveBeenCalled();
@@ -205,7 +208,9 @@ describe('ExercisesService', () => {
     it('should remove exercise successfully', async () => {
       mockExerciseRepository.findOne.mockResolvedValue(mockExercise);
       mockExerciseRepository.remove.mockResolvedValue(mockExercise);
-      mockI18nService.translate.mockResolvedValue('Exercício removido com sucesso');
+      mockI18nService.translate.mockResolvedValue(
+        'Exercício removido com sucesso',
+      );
 
       const result = await service.remove('exercise-uuid', 'pt-BR');
 
@@ -217,10 +222,9 @@ describe('ExercisesService', () => {
       mockExerciseRepository.findOne.mockResolvedValue(null);
       mockI18nService.translate.mockResolvedValue('Exercício não encontrado');
 
-      await expect(
-        service.remove('invalid-id', 'pt-BR'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.remove('invalid-id', 'pt-BR')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });
-

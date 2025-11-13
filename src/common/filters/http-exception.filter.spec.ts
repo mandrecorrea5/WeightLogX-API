@@ -1,5 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ArgumentsHost, HttpException, HttpStatus, BadRequestException } from '@nestjs/common';
+import {
+  ArgumentsHost,
+  HttpException,
+  HttpStatus,
+  BadRequestException,
+} from '@nestjs/common';
 import { I18nService } from 'nestjs-i18n';
 import { AllExceptionsFilter } from './http-exception.filter';
 import { Request, Response } from 'express';
@@ -88,10 +93,7 @@ describe('AllExceptionsFilter', () => {
     });
 
     it('should handle HttpException with array message', async () => {
-      const exception = new BadRequestException([
-        'Error 1',
-        'Error 2',
-      ]);
+      const exception = new BadRequestException(['Error 1', 'Error 2']);
       mockI18nService.translate.mockResolvedValue('Error 1');
 
       await filter.catch(exception, mockArgumentsHost);
@@ -138,45 +140,38 @@ describe('AllExceptionsFilter', () => {
     });
   });
 
-  describe('extractLocale', () => {
-    it('should extract pt-BR from Accept-Language header', async () => {
-      mockRequest.headers = { 'accept-language': 'pt-BR,en;q=0.9' };
-      const exception = new HttpException('test', HttpStatus.BAD_REQUEST);
-      mockI18nService.translate.mockResolvedValue('test');
-
+  // Note: The filter no longer translates messages - it assumes they are already translated
+  // These tests are kept for reference but the filter behavior has changed
+  describe('exception handling', () => {
+    it('should handle HttpException with string message', async () => {
+      const exception = new HttpException('test message', HttpStatus.BAD_REQUEST);
+      
       await filter.catch(exception, mockArgumentsHost);
 
-      expect(mockI18nService.translate).toHaveBeenCalledWith(
-        'test',
-        expect.objectContaining({ lang: 'pt-BR' }),
+      expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'test message',
+        }),
       );
     });
 
-    it('should extract en from Accept-Language header', async () => {
-      mockRequest.headers = { 'accept-language': 'en-US,en;q=0.9' };
-      const exception = new HttpException('test', HttpStatus.BAD_REQUEST);
-      mockI18nService.translate.mockResolvedValue('test');
-
-      await filter.catch(exception, mockArgumentsHost);
-
-      expect(mockI18nService.translate).toHaveBeenCalledWith(
-        'test',
-        expect.objectContaining({ lang: 'en' }),
+    it('should handle HttpException with object response', async () => {
+      const exception = new HttpException(
+        { message: 'test message', errors: ['error1'] },
+        HttpStatus.BAD_REQUEST,
       );
-    });
-
-    it('should default to pt-BR if no Accept-Language header', async () => {
-      mockRequest.headers = {};
-      const exception = new HttpException('test', HttpStatus.BAD_REQUEST);
-      mockI18nService.translate.mockResolvedValue('test');
-
+      
       await filter.catch(exception, mockArgumentsHost);
 
-      expect(mockI18nService.translate).toHaveBeenCalledWith(
-        'test',
-        expect.objectContaining({ lang: 'pt-BR' }),
+      expect(mockResponse.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          statusCode: HttpStatus.BAD_REQUEST,
+          message: 'test message',
+          errors: ['error1'],
+        }),
       );
     });
   });
 });
-

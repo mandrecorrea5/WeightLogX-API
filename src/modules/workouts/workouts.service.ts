@@ -14,9 +14,13 @@ import { WorkoutExerciseEntity } from './entities/workout-exercise.entity';
 import { SeriesConfigEntity } from './entities/series-config.entity';
 import { PersonalRecordEntity } from '../prs/entities/personal-record.entity';
 import { CreateWorkoutDto } from './dto/create-workout.dto';
+import { UpdateWorkoutDto } from './dto/update-workout.dto';
 import { CreateWorkoutResponseDto } from './dto/create-workout-response.dto';
 import { WorkoutResponseDto } from './dto/workout-response.dto';
-import { WorkoutListResponseDto, PaginationDto } from './dto/workout-list-response.dto';
+import {
+  WorkoutListResponseDto,
+  PaginationDto,
+} from './dto/workout-list-response.dto';
 import { WorkoutDetailsResponseDto } from './dto/workout-details-response.dto';
 import { SendToTrainerResponseDto } from './dto/send-to-trainer-response.dto';
 import { PrsService } from '../prs/prs.service';
@@ -37,7 +41,7 @@ export class WorkoutsService {
     @Inject(forwardRef(() => PrsService))
     private readonly prsService: PrsService,
     private readonly notificationsService: NotificationsService,
-  ) { }
+  ) {}
 
   async create(
     userId: string,
@@ -45,7 +49,10 @@ export class WorkoutsService {
     locale: string = 'pt-BR',
   ): Promise<CreateWorkoutResponseDto> {
     // Validate that there is at least one exercise
-    if (!createWorkoutDto.exercises || createWorkoutDto.exercises.length === 0) {
+    if (
+      !createWorkoutDto.exercises ||
+      createWorkoutDto.exercises.length === 0
+    ) {
       throw new BadRequestException(
         await this.i18n.translate('workouts.create.noExercises', {
           lang: locale,
@@ -81,7 +88,11 @@ export class WorkoutsService {
             }
 
             // Validate that all weights are defined (no undefined/null)
-            if (series.weights.some((weight) => weight === null || weight === undefined)) {
+            if (
+              series.weights.some(
+                (weight) => weight === null || weight === undefined,
+              )
+            ) {
               throw new BadRequestException(
                 await this.i18n.translate('workouts.create.incompleteWeights', {
                   lang: locale,
@@ -315,7 +326,7 @@ export class WorkoutsService {
   async update(
     workoutId: string,
     userId: string,
-    updateWorkoutDto: CreateWorkoutDto,
+    updateWorkoutDto: UpdateWorkoutDto,
     locale: string = 'pt-BR',
   ): Promise<CreateWorkoutResponseDto> {
     // Find existing workout
@@ -336,73 +347,92 @@ export class WorkoutsService {
       );
     }
 
-    // Delete related Personal Records first (will recalculate after update)
-    await this.personalRecordRepository.delete({ workoutId });
-
-    // Delete existing exercises and series (cascade will handle seriesConfigs)
-    if (workout.exercises && workout.exercises.length > 0) {
-      await this.workoutExerciseRepository.remove(workout.exercises);
+    // Validate that at least date or exercises are provided
+    if (!updateWorkoutDto.date && !updateWorkoutDto.exercises) {
+      throw new BadRequestException(
+        await this.i18n.translate('workouts.update.noFields', {
+          lang: locale,
+        }),
+      );
     }
 
-    // Update workout date
-    workout.date = new Date(updateWorkoutDto.date);
-    workout.sentToTrainer = false; // Reset sent status on update
-    workout.sentAt = null;
+    // Update workout date if provided, otherwise keep current date
+    if (updateWorkoutDto.date) {
+      workout.date = new Date(updateWorkoutDto.date);
+    }
 
-    // Calculate total volume and create new exercises
-    let totalVolume = 0;
-    const exercises: WorkoutExerciseEntity[] = [];
+    // Only reset sent status if date or exercises are being updated
+    if (updateWorkoutDto.date || updateWorkoutDto.exercises) {
+      workout.sentToTrainer = false; // Reset sent status on update
+      workout.sentAt = null;
+    }
 
-    for (const exerciseDto of updateWorkoutDto.exercises) {
-      const exercise = this.workoutExerciseRepository.create({
-        workoutId: workout.id,
-        exerciseId: exerciseDto.exerciseId,
-        name: exerciseDto.name,
-        abbreviation: exerciseDto.abbreviation,
-        isConjugated: exerciseDto.isConjugated ?? false, // Usa o valor enviado ou false por padrão
-      });
-
-      const seriesConfigs: SeriesConfigEntity[] = [];
-      let exerciseVolume = 0;
-
-      // Only create series configs if config array is not empty
-      if (exerciseDto.config && exerciseDto.config.length > 0) {
-        for (const seriesDto of exerciseDto.config) {
-          const seriesConfig = this.seriesConfigRepository.create({
-            workoutExerciseId: exercise.id,
-            sets: seriesDto.sets,
-            reps: seriesDto.reps,
-            percentage: seriesDto.percentage,
-            weights: seriesDto.weights || [], // Allow empty array
-          });
-
-          // Calculate volume for this series: sets × reps
-          // Only count volume if weights are provided (series was executed)
-          // If weights is empty [], volume is 0 (series not yet executed)
-          if (seriesDto.weights && seriesDto.weights.length > 0) {
-            const seriesVolume = seriesDto.sets * seriesDto.reps;
-            exerciseVolume += seriesVolume;
-          }
-          seriesConfigs.push(seriesConfig);
-        }
+    // Update exercises if provided
+    if (updateWorkoutDto.exercises) {
+      // Delete related Personal Records first (will recalculate after update)
+      await this.personalRecordRepository.delete({ workoutId });
+      // Delete existing exercises and series (cascade will handle seriesConfigs)
+      if (workout.exercises && workout.exercises.length > 0) {
+        await this.workoutExerciseRepository.remove(workout.exercises);
       }
-      // If config is empty [], seriesConfigs will be empty array and exerciseVolume will be 0
 
-      exercise.seriesConfigs = seriesConfigs;
-      exercises.push(exercise);
-      totalVolume += exerciseVolume;
+      // Calculate total volume and create new exercises
+      let totalVolume = 0;
+      const exercises: WorkoutExerciseEntity[] = [];
+
+      for (const exerciseDto of updateWorkoutDto.exercises) {
+        const exercise = this.workoutExerciseRepository.create({
+          workoutId: workout.id,
+          exerciseId: exerciseDto.exerciseId,
+          name: exerciseDto.name,
+          abbreviation: exerciseDto.abbreviation,
+          isConjugated: exerciseDto.isConjugated ?? false, // Usa o valor enviado ou false por padrão
+        });
+
+        const seriesConfigs: SeriesConfigEntity[] = [];
+        let exerciseVolume = 0;
+
+        // Only create series configs if config array is not empty
+        if (exerciseDto.config && exerciseDto.config.length > 0) {
+          for (const seriesDto of exerciseDto.config) {
+            const seriesConfig = this.seriesConfigRepository.create({
+              workoutExerciseId: exercise.id,
+              sets: seriesDto.sets,
+              reps: seriesDto.reps,
+              percentage: seriesDto.percentage,
+              weights: seriesDto.weights || [], // Allow empty array
+            });
+
+            // Calculate volume for this series: sets × reps
+            // Only count volume if weights are provided (series was executed)
+            // If weights is empty [], volume is 0 (series not yet executed)
+            if (seriesDto.weights && seriesDto.weights.length > 0) {
+              const seriesVolume = seriesDto.sets * seriesDto.reps;
+              exerciseVolume += seriesVolume;
+            }
+            seriesConfigs.push(seriesConfig);
+          }
+        }
+        // If config is empty [], seriesConfigs will be empty array and exerciseVolume will be 0
+
+        exercise.seriesConfigs = seriesConfigs;
+        exercises.push(exercise);
+        totalVolume += exerciseVolume;
+      }
+
+      workout.totalVolume = totalVolume;
+      workout.exercises = exercises;
     }
-
-    workout.totalVolume = totalVolume;
-    workout.exercises = exercises;
 
     const savedWorkout = await this.workoutRepository.save(workout);
 
-    // Recalculate PRs after update
-    try {
-      await this.prsService.calculateAndUpdatePRs(savedWorkout.id, userId);
-    } catch (error) {
-      console.error('Erro ao recalcular PRs:', error);
+    // Recalculate PRs only if exercises were updated
+    if (updateWorkoutDto.exercises) {
+      try {
+        await this.prsService.calculateAndUpdatePRs(savedWorkout.id, userId);
+      } catch (error) {
+        console.error('Erro ao recalcular PRs:', error);
+      }
     }
 
     // Get success message
@@ -449,9 +479,12 @@ export class WorkoutsService {
   ): WorkoutResponseDto {
     // Calculate exercise volumes
     const exercises = (workout.exercises || []).map((exercise) => {
-      const exerciseVolume = (exercise.seriesConfigs || []).reduce((total, series) => {
-        return total + series.sets * series.reps;
-      }, 0);
+      const exerciseVolume = (exercise.seriesConfigs || []).reduce(
+        (total, series) => {
+          return total + series.sets * series.reps;
+        },
+        0,
+      );
 
       return {
         name: exercise.name,
@@ -532,4 +565,3 @@ export class WorkoutsService {
     };
   }
 }
-

@@ -4,7 +4,7 @@ import {
   HealthCheckService,
   TypeOrmHealthIndicator,
   DiskHealthIndicator,
-  MemoryHealthIndicator
+  MemoryHealthIndicator,
 } from '@nestjs/terminus';
 import { Public } from '../decorators/public.decorator';
 
@@ -15,7 +15,7 @@ export class HealthController {
     private db: TypeOrmHealthIndicator,
     private disk: DiskHealthIndicator,
     private memory: MemoryHealthIndicator,
-  ) { }
+  ) {}
 
   @Get()
   @Public()
@@ -32,10 +32,11 @@ export class HealthController {
       () => this.memory.checkRSS('memory_rss', 1024 * 1024 * 1024 * 0.8),
 
       // Disk health check (warn if above 80% of 100GB)
-      () => this.disk.checkStorage('storage', {
-        path: '/',
-        thresholdPercent: 0.8,
-      }),
+      () =>
+        this.disk.checkStorage('storage', {
+          path: '/',
+          thresholdPercent: 0.8,
+        }),
     ]);
   }
 
@@ -57,4 +58,3 @@ export class HealthController {
     ]);
   }
 }
-

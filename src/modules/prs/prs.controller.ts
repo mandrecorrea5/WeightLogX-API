@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  Query,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, Get, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -22,7 +16,7 @@ import { UserEntity } from '../../database/entities/user.entity';
 @Controller('prs')
 @ApiBearerAuth('JWT-auth')
 export class PrsController {
-  constructor(private readonly prsService: PrsService) { }
+  constructor(private readonly prsService: PrsService) {}
 
   @Get()
   @HttpCode(HttpStatus.OK)
@@ -54,4 +48,3 @@ export class PrsController {
     return this.prsService.findAll(user.id, exerciseId, recentOnly, locale);
   }
 }
-

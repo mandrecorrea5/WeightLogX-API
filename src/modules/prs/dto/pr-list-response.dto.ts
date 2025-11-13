@@ -13,4 +13,3 @@ export class PrListResponseDto {
   @Type(() => PrResponseDto)
   prs: PrResponseDto[];
 }
-

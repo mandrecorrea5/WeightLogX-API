@@ -176,4 +176,3 @@ export class MetricsService {
     return promClient.register.contentType;
   }
 }
-

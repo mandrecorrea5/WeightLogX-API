@@ -42,4 +42,3 @@ export class UpdateExerciseDto {
   @MinLength(1)
   abbreviationEn?: string;
 }
-

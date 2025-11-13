@@ -15,5 +15,4 @@ import { TrainerEntity } from '../trainers/entities/trainer.entity';
   providers: [TrainingCentersService],
   exports: [TrainingCentersService],
 })
-export class TrainingCentersModule { }
-
+export class TrainingCentersModule {}

@@ -11,5 +11,3 @@ export class CreateTrainerDto {
   @MinLength(2)
   name: string;
 }
-
-

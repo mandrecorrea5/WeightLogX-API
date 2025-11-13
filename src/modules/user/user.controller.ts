@@ -12,7 +12,14 @@ import {
   HttpStatus,
   BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiBearerAuth,
+  ApiConsumes,
+} from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { I18nLang } from 'nestjs-i18n';
 import { UserService } from './user.service';
@@ -45,7 +52,7 @@ export class UserController {
     private readonly permissionsService: PermissionsService,
     private readonly configService: ConfigService,
     private readonly i18n: I18nService,
-  ) { }
+  ) {}
 
   @Get('profile')
   @ApiOperation({ summary: 'Retorna dados do usuário autenticado' })
@@ -86,7 +93,10 @@ export class UserController {
   @ApiBody({ type: ChangePasswordDto })
   @ApiResponse({ status: 200, description: 'Senha alterada com sucesso' })
   @ApiResponse({ status: 400, description: 'Dados inválidos' })
-  @ApiResponse({ status: 401, description: 'Senha atual incorreta ou não autenticado' })
+  @ApiResponse({
+    status: 401,
+    description: 'Senha atual incorreta ou não autenticado',
+  })
   async changePassword(
     @CurrentUser() user: UserEntity,
     @Body() changePasswordDto: ChangePasswordDto,
@@ -116,7 +126,10 @@ export class UserController {
     description: 'Imagem de perfil enviada com sucesso',
     type: UploadImageResponseDto,
   })
-  @ApiResponse({ status: 400, description: 'Formato ou tamanho de imagem inválido' })
+  @ApiResponse({
+    status: 400,
+    description: 'Formato ou tamanho de imagem inválido',
+  })
   @ApiResponse({ status: 401, description: 'Não autenticado' })
   async uploadProfileImage(
     @CurrentUser() user: UserEntity,
@@ -152,7 +165,10 @@ export class UserController {
     // Process image with Sharp
     const uploadConfig = this.configService.get('upload');
     const uploadPath = uploadConfig.profileImagePath || './uploads/profiles';
-    const imageSize = uploadConfig.profileImageSize || { width: 512, height: 512 };
+    const imageSize = uploadConfig.profileImageSize || {
+      width: 512,
+      height: 512,
+    };
 
     // Ensure upload directory exists
     await fs.mkdir(uploadPath, { recursive: true });
@@ -244,15 +260,29 @@ export class UserController {
     @Body() updateUserRoleDto: UpdateUserRoleDto,
     @I18nLang() locale: string,
   ): Promise<ProfileResponseDto> {
-    return this.userService.updateUserRole(userId, updateUserRoleDto.role, locale);
+    return this.userService.updateUserRole(
+      userId,
+      updateUserRoleDto.role,
+      locale,
+    );
   }
 
   @Put('users/:userId/trainer')
   @UseGuards(RolesGuard)
   @Roles('admin')
   @ApiOperation({ summary: 'Define o treinador de um atleta (apenas admin)' })
-  @ApiBody({ schema: { type: 'object', properties: { trainerId: { type: 'string', format: 'uuid' } }, required: ['trainerId'] } })
-  @ApiResponse({ status: 200, description: 'Vínculo atualizado', type: ProfileResponseDto })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { trainerId: { type: 'string', format: 'uuid' } },
+      required: ['trainerId'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Vínculo atualizado',
+    type: ProfileResponseDto,
+  })
   async setTrainer(
     @Param('userId') userId: string,
     @Body('trainerId') trainerId: string,
@@ -265,7 +295,11 @@ export class UserController {
   @UseGuards(RolesGuard)
   @Roles('admin')
   @ApiOperation({ summary: 'Remove o treinador de um atleta (apenas admin)' })
-  @ApiResponse({ status: 200, description: 'Vínculo removido', type: ProfileResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Vínculo removido',
+    type: ProfileResponseDto,
+  })
   async removeTrainer(
     @Param('userId') userId: string,
     @I18nLang() locale: string,
@@ -273,4 +307,3 @@ export class UserController {
     return this.userService.removeTrainer(userId, locale);
   }
 }
-

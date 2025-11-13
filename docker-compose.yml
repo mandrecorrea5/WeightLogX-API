@@ -1,14 +1,9 @@
 version: '3.8'
 
-# Docker Compose para produção
-# Uso: docker-compose up --build
-# 
-# A aplicação será construída dentro do container usando o Dockerfile
-# Ambos os serviços (api e db) estão na mesma rede Docker para comunicação
-# O build da aplicação acontece no stage 'build' e é copiado para 'production'
+# Docker Compose para a stack principal: API + DB + Monitoramento (Sem PostHog)
 
 services:
-  # 1. Serviço do Banco de Dados PostgreSQL
+  # 1. Serviço do Banco de Dados PostgreSQL (Principal)
   db:
     image: postgres:14-alpine
     container_name: weightlogx_db
@@ -24,7 +19,6 @@ services:
     networks:
       - weightlogx_network
     healthcheck:
-      # Especifica o banco de dados para evitar erro "database user_weightlogx does not exist"
       test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER:-user_weightlogx} -d ${DATABASE_NAME:-weightlogx_db}"]
       interval: 10s
       timeout: 5s
@@ -35,7 +29,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: production  # Usar stage de produção com build completo
+      target: production
     container_name: weightlogx_api
     restart: unless-stopped
     ports:
@@ -44,7 +38,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      # Database - usando o nome do serviço 'db' para comunicação na mesma rede Docker
+      # Database
       DATABASE_HOST: db
       DATABASE_PORT: 5432
       DATABASE_USER: ${DATABASE_USER:-user_weightlogx}
@@ -54,18 +48,13 @@ services:
       # Application
       NODE_ENV: ${NODE_ENV:-production}
       PORT: 3000
-      # JWT
       JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
-      # CORS
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
-      # Upload
       UPLOAD_DEST: ./uploads
       MAX_FILE_SIZE: ${MAX_FILE_SIZE:-5242880}
     volumes:
-      # Volume para uploads persistente na raiz da aplicação
       - ./uploads:/app/uploads
-      # Volume para i18n (caso precise de atualizações sem rebuild)
       - ./src/i18n:/app/src/i18n
     networks:
       - weightlogx_network
@@ -120,6 +109,7 @@ services:
     volumes:
       - ./logs:/var/log/app:ro
       - ./promtail/promtail-config.yml:/etc/promtail/config.yml:ro
+      # Volumes necessários para coletar logs do Docker (essencial)
       - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
     command: -config.file=/etc/promtail/config.yml
@@ -152,8 +142,6 @@ services:
       - loki
 
 networks:
-  # Rede compartilhada entre api e db para comunicação interna
-  # Os serviços podem se comunicar usando o nome do serviço (ex: db:5432)
   weightlogx_network:
     driver: bridge
 

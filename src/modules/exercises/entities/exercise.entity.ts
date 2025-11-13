@@ -29,4 +29,3 @@ export class ExerciseEntity {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }
-

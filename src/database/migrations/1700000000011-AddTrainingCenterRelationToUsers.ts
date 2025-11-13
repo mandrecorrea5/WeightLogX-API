@@ -6,7 +6,8 @@ import {
 } from 'typeorm';
 
 export class AddTrainingCenterRelationToUsers1700000000011
-  implements MigrationInterface {
+  implements MigrationInterface
+{
   public async up(queryRunner: QueryRunner): Promise<void> {
     const hasTrainingCenterColumn = await queryRunner.hasColumn(
       'users',
@@ -89,5 +90,3 @@ export class AddTrainingCenterRelationToUsers1700000000011
     }
   }
 }
-
-

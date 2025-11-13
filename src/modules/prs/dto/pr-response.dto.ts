@@ -44,4 +44,3 @@ export class PrResponseDto {
   @IsString()
   workoutId: string;
 }
-

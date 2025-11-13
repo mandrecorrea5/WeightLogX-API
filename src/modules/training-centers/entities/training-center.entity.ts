@@ -51,4 +51,3 @@ export class TrainingCenterEntity {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }
-

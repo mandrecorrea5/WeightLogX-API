@@ -8,7 +8,6 @@ import {
   ValidateNested,
   ArrayMinSize,
   Min,
-  Max,
   ArrayNotEmpty,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -41,18 +40,17 @@ export class SeriesConfigDto {
   reps: number;
 
   @ApiProperty({
-    description: 'Porcentagem de 1RM',
+    description: 'Porcentagem de 1RM (pode ser maior que 100% se o atleta extrapolar o limite)',
     example: 75,
     minimum: 0,
-    maximum: 100,
   })
   @IsNumber()
   @Min(0)
-  @Max(100)
   percentage: number;
 
   @ApiProperty({
-    description: 'Array de pesos executados em cada série (pode ser array vazio se ainda não preenchido)',
+    description:
+      'Array de pesos executados em cada série (pode ser array vazio se ainda não preenchido)',
     example: [80, 82.5, 85],
     type: [Number],
   })
@@ -120,4 +118,3 @@ export class CreateWorkoutDto {
   @Type(() => ExerciseConfigDto)
   exercises: ExerciseConfigDto[];
 }
-

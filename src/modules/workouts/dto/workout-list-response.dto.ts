@@ -52,4 +52,3 @@ export class WorkoutListResponseDto {
   @Type(() => PaginationDto)
   pagination: PaginationDto;
 }
-

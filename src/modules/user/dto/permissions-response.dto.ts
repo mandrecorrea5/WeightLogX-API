@@ -28,4 +28,3 @@ export class PermissionsResponseDto {
   })
   permissions: PermissionDto[];
 }
-

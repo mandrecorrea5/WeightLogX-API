@@ -38,9 +38,9 @@ describe('ImageValidationPipe', () => {
     it('should throw BadRequestException if file is null', async () => {
       mockI18nService.translate.mockResolvedValue('Formato de imagem inválido');
 
-      await expect(
-        pipe.transform(null as any, mockMetadata),
-      ).rejects.toThrow(BadRequestException);
+      await expect(pipe.transform(null as any, mockMetadata)).rejects.toThrow(
+        BadRequestException,
+      );
 
       expect(mockI18nService.translate).toHaveBeenCalled();
     });
@@ -61,9 +61,9 @@ describe('ImageValidationPipe', () => {
 
       mockI18nService.translate.mockResolvedValue('Formato de imagem inválido');
 
-      await expect(
-        pipe.transform(invalidFile, mockMetadata),
-      ).rejects.toThrow(BadRequestException);
+      await expect(pipe.transform(invalidFile, mockMetadata)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should throw BadRequestException for file size exceeding 5MB', async () => {
@@ -74,9 +74,9 @@ describe('ImageValidationPipe', () => {
 
       mockI18nService.translate.mockResolvedValue('Tamanho de imagem inválido');
 
-      await expect(
-        pipe.transform(largeFile, mockMetadata),
-      ).rejects.toThrow(BadRequestException);
+      await expect(pipe.transform(largeFile, mockMetadata)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it('should return file for valid JPEG image', async () => {
@@ -124,4 +124,3 @@ describe('ImageValidationPipe', () => {
     });
   });
 });
-

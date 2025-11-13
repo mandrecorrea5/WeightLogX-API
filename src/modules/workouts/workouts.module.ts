@@ -26,5 +26,4 @@ import { NotificationsModule } from '../notifications/notifications.module';
   providers: [WorkoutsService],
   exports: [WorkoutsService],
 })
-export class WorkoutsModule { }
-
+export class WorkoutsModule {}

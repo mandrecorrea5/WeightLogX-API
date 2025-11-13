@@ -11,7 +11,7 @@ import { MetricsService } from './metrics.service';
 
 @Injectable()
 export class MetricsInterceptor implements NestInterceptor {
-  constructor(private readonly metricsService: MetricsService) { }
+  constructor(private readonly metricsService: MetricsService) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest<Request>();
@@ -86,10 +86,12 @@ export class MetricsInterceptor implements NestInterceptor {
 
   private getFullEndpoint(request: Request): string {
     // Remove apenas /api do início
-    return request.path
-      .replace(/^\/api\/?/, '')
-      .replace(/^\/+/, '')
-      .replace(/\/+$/, '') || 'root';
+    return (
+      request.path
+        .replace(/^\/api\/?/, '')
+        .replace(/^\/+/, '')
+        .replace(/\/+$/, '') || 'root'
+    );
   }
 
   private getRequestSize(request: Request): number | undefined {
@@ -112,12 +114,16 @@ export class MetricsInterceptor implements NestInterceptor {
 
   private normalizeRoute(path: string): string {
     // Remove IDs UUID e outros parâmetros dinâmicos
-    return path
-      .replace(/\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '/:id')
-      .replace(/\/[0-9]+/g, '/:id')
-      .replace(/\/api\/?/, '')
-      .replace(/^\/+/, '')
-      .replace(/\/+$/, '') || 'root';
+    return (
+      path
+        .replace(
+          /\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi,
+          '/:id',
+        )
+        .replace(/\/[0-9]+/g, '/:id')
+        .replace(/\/api\/?/, '')
+        .replace(/^\/+/, '')
+        .replace(/\/+$/, '') || 'root'
+    );
   }
 }
-

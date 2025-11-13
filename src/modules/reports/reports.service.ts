@@ -6,8 +6,15 @@ import { WorkoutEntity } from '../workouts/entities/workout.entity';
 import { WorkoutExerciseEntity } from '../workouts/entities/workout-exercise.entity';
 import { SeriesConfigEntity } from '../workouts/entities/series-config.entity';
 import { PersonalRecordEntity } from '../prs/entities/personal-record.entity';
-import { ReportsQueryDto, ReportType, TimeFilter } from './dto/reports-query.dto';
-import { ReportsResponseDto, GraphDataPointDto } from './dto/reports-response.dto';
+import {
+  ReportsQueryDto,
+  ReportType,
+  TimeFilter,
+} from './dto/reports-query.dto';
+import {
+  ReportsResponseDto,
+  GraphDataPointDto,
+} from './dto/reports-response.dto';
 
 @Injectable()
 export class ReportsService {
@@ -21,7 +28,7 @@ export class ReportsService {
     @InjectRepository(PersonalRecordEntity)
     private readonly prRepository: Repository<PersonalRecordEntity>,
     private readonly i18n: I18nService,
-  ) { }
+  ) {}
 
   async generateReport(
     userId: string,
@@ -31,7 +38,9 @@ export class ReportsService {
     // Validate exerciseId if type is exercicio
     if (query.type === ReportType.EXERCICIO && !query.exerciseId) {
       throw new BadRequestException(
-        await this.i18n.translate('reports.exerciseIdRequired', { lang: locale }),
+        await this.i18n.translate('reports.exerciseIdRequired', {
+          lang: locale,
+        }),
       );
     }
 
@@ -64,19 +73,50 @@ export class ReportsService {
     );
 
     // Calculate current period metrics
-    const currentMediaGeral = await this.calculateMediaGeral(workouts, query.type, query.exerciseId);
-    const currentVolumeTotal = await this.calculateVolumeTotal(workouts, query.type, query.exerciseId);
+    const currentMediaGeral = await this.calculateMediaGeral(
+      workouts,
+      query.type,
+      query.exerciseId,
+    );
+    const currentVolumeTotal = await this.calculateVolumeTotal(
+      workouts,
+      query.type,
+      query.exerciseId,
+    );
 
     // Calculate previous period metrics
-    const previousMediaGeral = await this.calculateMediaGeral(previousWorkouts, query.type, query.exerciseId);
-    const previousVolumeTotal = await this.calculateVolumeTotal(previousWorkouts, query.type, query.exerciseId);
+    const previousMediaGeral = await this.calculateMediaGeral(
+      previousWorkouts,
+      query.type,
+      query.exerciseId,
+    );
+    const previousVolumeTotal = await this.calculateVolumeTotal(
+      previousWorkouts,
+      query.type,
+      query.exerciseId,
+    );
 
     // Calculate variations
-    const mediaGeralVariation = this.calculateVariation(currentMediaGeral, previousMediaGeral);
-    const volumeTotalVariation = this.calculateVariation(currentVolumeTotal, previousVolumeTotal);
+    const mediaGeralVariation = this.calculateVariation(
+      currentMediaGeral,
+      previousMediaGeral,
+    );
+    const volumeTotalVariation = this.calculateVariation(
+      currentVolumeTotal,
+      previousVolumeTotal,
+    );
 
-    const prsRecentes = await this.countRecentPRs(userId, startDate, endDate, query.exerciseId);
-    const quantidadeTreinos = this.countWorkouts(workouts, query.type, query.exerciseId);
+    const prsRecentes = await this.countRecentPRs(
+      userId,
+      startDate,
+      endDate,
+      query.exerciseId,
+    );
+    const quantidadeTreinos = this.countWorkouts(
+      workouts,
+      query.type,
+      query.exerciseId,
+    );
     const graphData = await this.generateGraphData(
       userId,
       startDate,
@@ -102,11 +142,16 @@ export class ReportsService {
     };
   }
 
-  private calculateVariation(current: number, previous: number): { percent: number; isPositive: boolean } {
+  private calculateVariation(
+    current: number,
+    previous: number,
+  ): { percent: number; isPositive: boolean } {
     if (previous === 0) {
       return { percent: current > 0 ? 100 : 0, isPositive: current > 0 };
     }
-    const percent = Number(((current - previous) / previous * 100).toFixed(1));
+    const percent = Number(
+      (((current - previous) / previous) * 100).toFixed(1),
+    );
     return { percent, isPositive: percent >= 0 };
   }
 
@@ -123,7 +168,10 @@ export class ReportsService {
 
       for (const exercise of workout.exercises) {
         // Filter by exercise if type is exercicio
-        if (type === ReportType.EXERCICIO && exercise.exerciseId !== exerciseId) {
+        if (
+          type === ReportType.EXERCICIO &&
+          exercise.exerciseId !== exerciseId
+        ) {
           continue;
         }
 
@@ -131,13 +179,17 @@ export class ReportsService {
 
         for (const seriesConfig of exercise.seriesConfigs) {
           if (seriesConfig.weights && seriesConfig.weights.length > 0) {
-            const seriesTotalWeight = seriesConfig.weights.reduce((sum, w) => sum + w, 0);
+            const seriesTotalWeight = seriesConfig.weights.reduce(
+              (sum, w) => sum + w,
+              0,
+            );
             workoutWeight += seriesTotalWeight;
           }
         }
       }
 
       // Only count workouts that have matching exercises and weight > 0
+      // Isso garante que apenas treinos executados (com pesos preenchidos) sejam contados
       if (workoutHasMatchingExercises && workoutWeight > 0) {
         workoutCount++;
       }
@@ -146,8 +198,14 @@ export class ReportsService {
     return workoutCount;
   }
 
-  private getDateRange(timeFilter: TimeFilter): { startDate: Date; endDate: Date } {
+  private getDateRange(timeFilter: TimeFilter): {
+    startDate: Date;
+    endDate: Date;
+  } {
     const endDate = new Date();
+    // Normalizar endDate para o final do dia (23:59:59.999)
+    endDate.setHours(23, 59, 59, 999);
+    
     const startDate = new Date();
 
     switch (timeFilter) {
@@ -164,6 +222,9 @@ export class ReportsService {
         startDate.setFullYear(endDate.getFullYear() - 1);
         break;
     }
+    
+    // Normalizar startDate para o início do dia (00:00:00.000)
+    startDate.setHours(0, 0, 0, 0);
 
     return { startDate, endDate };
   }
@@ -184,7 +245,9 @@ export class ReportsService {
       .andWhere('workout.date <= :endDate', { endDate });
 
     if (type === ReportType.EXERCICIO && exerciseId) {
-      queryBuilder.andWhere('exercise.exerciseId = :exerciseId', { exerciseId });
+      queryBuilder.andWhere('exercise.exerciseId = :exerciseId', {
+        exerciseId,
+      });
     }
 
     return queryBuilder.orderBy('workout.date', 'ASC').getMany();
@@ -209,7 +272,10 @@ export class ReportsService {
 
       for (const exercise of workout.exercises) {
         // Filter by exercise if type is exercicio
-        if (type === ReportType.EXERCICIO && exercise.exerciseId !== exerciseId) {
+        if (
+          type === ReportType.EXERCICIO &&
+          exercise.exerciseId !== exerciseId
+        ) {
           continue;
         }
 
@@ -217,7 +283,10 @@ export class ReportsService {
 
         for (const seriesConfig of exercise.seriesConfigs) {
           if (seriesConfig.weights && seriesConfig.weights.length > 0) {
-            const seriesTotalWeight = seriesConfig.weights.reduce((sum, w) => sum + w, 0);
+            const seriesTotalWeight = seriesConfig.weights.reduce(
+              (sum, w) => sum + w,
+              0,
+            );
             workoutWeight += seriesTotalWeight;
           }
         }
@@ -232,7 +301,9 @@ export class ReportsService {
 
     // Media Geral = Volume Total / Número de Treinos
     // Representa o volume médio por treino no período
-    return workoutCount > 0 ? Number((totalWeight / workoutCount).toFixed(2)) : 0;
+    return workoutCount > 0
+      ? Number((totalWeight / workoutCount).toFixed(2))
+      : 0;
   }
 
   private async calculateVolumeTotal(
@@ -245,13 +316,19 @@ export class ReportsService {
     for (const workout of workouts) {
       for (const exercise of workout.exercises) {
         // Filter by exercise if type is exercicio
-        if (type === ReportType.EXERCICIO && exercise.exerciseId !== exerciseId) {
+        if (
+          type === ReportType.EXERCICIO &&
+          exercise.exerciseId !== exerciseId
+        ) {
           continue;
         }
 
         for (const seriesConfig of exercise.seriesConfigs) {
           if (seriesConfig.weights && seriesConfig.weights.length > 0) {
-            const seriesVolume = seriesConfig.weights.reduce((sum, w) => sum + w, 0);
+            const seriesVolume = seriesConfig.weights.reduce(
+              (sum, w) => sum + w,
+              0,
+            );
             volumeTotal += seriesVolume;
           }
         }
@@ -297,7 +374,10 @@ export class ReportsService {
     );
 
     // Group workouts by month
-    const monthlyData = new Map<string, { totalWeight: number; workoutCount: number }>();
+    const monthlyData = new Map<
+      string,
+      { totalWeight: number; workoutCount: number }
+    >();
 
     for (const workout of workouts) {
       const monthKey = this.getMonthKey(workout.date);
@@ -312,7 +392,10 @@ export class ReportsService {
 
       for (const exercise of workout.exercises) {
         // Filter by exercise if type is exercicio
-        if (type === ReportType.EXERCICIO && exercise.exerciseId !== exerciseId) {
+        if (
+          type === ReportType.EXERCICIO &&
+          exercise.exerciseId !== exerciseId
+        ) {
           continue;
         }
 
@@ -320,7 +403,10 @@ export class ReportsService {
 
         for (const seriesConfig of exercise.seriesConfigs) {
           if (seriesConfig.weights && seriesConfig.weights.length > 0) {
-            const seriesTotalWeight = seriesConfig.weights.reduce((sum, w) => sum + w, 0);
+            const seriesTotalWeight = seriesConfig.weights.reduce(
+              (sum, w) => sum + w,
+              0,
+            );
             workoutWeight += seriesTotalWeight;
           }
         }
@@ -339,9 +425,10 @@ export class ReportsService {
 
     for (const monthKey of sortedMonths) {
       const monthData = monthlyData.get(monthKey)!;
-      const average = monthData.workoutCount > 0
-        ? Number((monthData.totalWeight / monthData.workoutCount).toFixed(2))
-        : 0;
+      const average =
+        monthData.workoutCount > 0
+          ? Number((monthData.totalWeight / monthData.workoutCount).toFixed(2))
+          : 0;
 
       graphData.push({
         date: monthKey,
@@ -358,4 +445,3 @@ export class ReportsService {
     return `${year}-${month}-01`;
   }
 }
-

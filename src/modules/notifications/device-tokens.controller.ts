@@ -8,13 +8,18 @@ import { NotificationsService } from './notifications.service';
 @ApiBearerAuth('JWT-auth')
 @Controller('notifications/device-tokens')
 export class DeviceTokensController {
-  constructor(private readonly notificationsService: NotificationsService) { }
+  constructor(private readonly notificationsService: NotificationsService) {}
 
   @Post()
   @ApiOperation({ summary: 'Register a device token' })
   async register(
     @CurrentUser() user: UserEntity,
-    @Body() body: { deviceToken: string; platform: 'ios' | 'android'; deviceId?: string },
+    @Body()
+    body: {
+      deviceToken: string;
+      platform: 'ios' | 'android';
+      deviceId?: string;
+    },
   ) {
     await this.notificationsService.registerDeviceToken(user.id, body);
     return { message: 'Token registrado' };
@@ -22,7 +27,10 @@ export class DeviceTokensController {
 
   @Delete(':deviceToken')
   @ApiOperation({ summary: 'Delete a device token' })
-  async remove(@CurrentUser() user: UserEntity, @Param('deviceToken') deviceToken: string) {
+  async remove(
+    @CurrentUser() user: UserEntity,
+    @Param('deviceToken') deviceToken: string,
+  ) {
     await this.notificationsService.deleteDeviceToken(user.id, deviceToken);
     return { message: 'Token removido' };
   }

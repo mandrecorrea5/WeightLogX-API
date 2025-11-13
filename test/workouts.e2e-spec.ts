@@ -15,14 +15,12 @@ describe('Workouts (e2e)', () => {
     testEmail = `workout-test-${Date.now()}@example.com`;
     const password = 'Test123!@#';
 
-    await request(app.getHttpServer())
-      .post('/api/auth/register')
-      .send({
-        email: testEmail,
-        password,
-        confirmPassword: password,
-        fullName: 'Workout Test User',
-      });
+    await request(app.getHttpServer()).post('/api/auth/register').send({
+      email: testEmail,
+      password,
+      confirmPassword: password,
+      fullName: 'Workout Test User',
+    });
 
     const loginResponse = await request(app.getHttpServer())
       .post('/api/auth/login')
@@ -159,7 +157,9 @@ describe('Workouts (e2e)', () => {
 
     it('should filter workouts by date range', () => {
       return request(app.getHttpServer())
-        .get('/api/workouts?startDate=2024-01-01T00:00:00Z&endDate=2024-12-31T23:59:59Z')
+        .get(
+          '/api/workouts?startDate=2024-01-01T00:00:00Z&endDate=2024-12-31T23:59:59Z',
+        )
         .set('Authorization', `Bearer ${accessToken}`)
         .expect(200);
     });
@@ -260,4 +260,3 @@ describe('Workouts (e2e)', () => {
     }, 15000);
   });
 });
-

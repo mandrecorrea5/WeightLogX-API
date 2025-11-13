@@ -8,4 +8,3 @@ export class TrainingCenterListResponseDto {
   })
   trainingCenters: TrainingCenterResponseDto[];
 }
-

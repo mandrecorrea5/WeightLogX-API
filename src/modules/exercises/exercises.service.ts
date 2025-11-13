@@ -7,6 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { I18nService } from 'nestjs-i18n';
+import { safeTranslate } from '../../common/utils/i18n-safe.util';
 import { ExerciseEntity } from './entities/exercise.entity';
 import { CreateExerciseDto } from './dto/create-exercise.dto';
 import { UpdateExerciseDto } from './dto/update-exercise.dto';
@@ -19,7 +20,7 @@ export class ExercisesService {
     @InjectRepository(ExerciseEntity)
     private readonly exerciseRepository: Repository<ExerciseEntity>,
     private readonly i18n: I18nService,
-  ) { }
+  ) {}
 
   async create(
     createExerciseDto: CreateExerciseDto,
@@ -34,11 +35,21 @@ export class ExercisesService {
     });
 
     if (existingExercise) {
-      throw new ConflictException(
-        await this.i18n.translate('exercises.create.alreadyExists', {
+      const message = await safeTranslate(
+        this.i18n,
+        'exercises.create.alreadyExists',
+        {
           lang: locale,
-        }),
+          defaultValue: 'Exercício com este nome já existe',
+        },
       );
+      
+      // Retornar o exercício existente junto com a mensagem de erro
+      // para que o frontend possa usar esse exercício ao invés de criar um novo
+      throw new ConflictException({
+        message,
+        existingExercise: this.mapToResponse(existingExercise),
+      });
     }
 
     const exercise = this.exerciseRepository.create({
@@ -63,7 +74,10 @@ export class ExercisesService {
     };
   }
 
-  async findOne(id: string, locale: string = 'pt-BR'): Promise<ExerciseResponseDto> {
+  async findOne(
+    id: string,
+    locale: string = 'pt-BR',
+  ): Promise<ExerciseResponseDto> {
     const exercise = await this.exerciseRepository.findOne({
       where: { id },
     });
@@ -133,7 +147,10 @@ export class ExercisesService {
     return this.mapToResponse(updatedExercise);
   }
 
-  async remove(id: string, locale: string = 'pt-BR'): Promise<{ message: string }> {
+  async remove(
+    id: string,
+    locale: string = 'pt-BR',
+  ): Promise<{ message: string }> {
     const exercise = await this.exerciseRepository.findOne({
       where: { id },
     });
@@ -168,4 +185,3 @@ export class ExercisesService {
     };
   }
 }
-

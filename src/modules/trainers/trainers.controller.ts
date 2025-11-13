@@ -24,7 +24,7 @@ import { TrainerListResponseDto } from './dto/trainer-list-response.dto';
 @ApiTags('trainers')
 @Controller('trainers')
 export class TrainersController {
-  constructor(private readonly trainersService: TrainersService) { }
+  constructor(private readonly trainersService: TrainersService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -66,5 +66,3 @@ export class TrainersController {
     return this.trainersService.findAll(locale, search);
   }
 }
-
-

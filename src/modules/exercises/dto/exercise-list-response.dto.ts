@@ -8,4 +8,3 @@ export class ExerciseListResponseDto {
   })
   exercises: ExerciseResponseDto[];
 }
-

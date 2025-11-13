@@ -43,4 +43,3 @@ export class ExerciseResponseDto {
   })
   updatedAt: string;
 }
-

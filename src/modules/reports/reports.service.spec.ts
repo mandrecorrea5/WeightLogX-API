@@ -8,7 +8,11 @@ import { WorkoutEntity } from '../workouts/entities/workout.entity';
 import { WorkoutExerciseEntity } from '../workouts/entities/workout-exercise.entity';
 import { SeriesConfigEntity } from '../workouts/entities/series-config.entity';
 import { PersonalRecordEntity } from '../prs/entities/personal-record.entity';
-import { ReportsQueryDto, ReportType, TimeFilter } from './dto/reports-query.dto';
+import {
+  ReportsQueryDto,
+  ReportType,
+  TimeFilter,
+} from './dto/reports-query.dto';
 
 describe('ReportsService', () => {
   let service: ReportsService;
@@ -174,11 +178,17 @@ describe('ReportsService', () => {
         mockPrQueryBuilder as any,
       );
 
-      const result = await service.generateReport('user-uuid', baseQuery, 'pt-BR');
+      const result = await service.generateReport(
+        'user-uuid',
+        baseQuery,
+        'pt-BR',
+      );
 
       expect(result).toBeDefined();
-      expect(result.mediaGeral).toBeGreaterThanOrEqual(0);
-      expect(result.volumeTotal).toBeGreaterThanOrEqual(0);
+      expect(result.evolucaoMediaGeral).toBeDefined();
+      expect(result.evolucaoMediaGeral.current).toBeGreaterThanOrEqual(0);
+      expect(result.volumeTotal).toBeDefined();
+      expect(result.volumeTotal.current).toBeGreaterThanOrEqual(0);
       expect(result.prsRecentes).toBe(2);
       expect(Array.isArray(result.graphData)).toBe(true);
     });
@@ -237,7 +247,7 @@ describe('ReportsService', () => {
       const result = (service as any).getDateRange(TimeFilter.SEVEN_DAYS);
       const daysDiff = Math.floor(
         (result.endDate.getTime() - result.startDate.getTime()) /
-        (1000 * 60 * 60 * 24),
+          (1000 * 60 * 60 * 24),
       );
 
       expect(daysDiff).toBe(7);
@@ -247,7 +257,7 @@ describe('ReportsService', () => {
       const result = (service as any).getDateRange(TimeFilter.THIRTY_DAYS);
       const daysDiff = Math.floor(
         (result.endDate.getTime() - result.startDate.getTime()) /
-        (1000 * 60 * 60 * 24),
+          (1000 * 60 * 60 * 24),
       );
 
       expect(daysDiff).toBe(30);
@@ -401,9 +411,7 @@ describe('ReportsService', () => {
         getCount: jest.fn().mockResolvedValue(5),
       };
 
-      prRepository.createQueryBuilder.mockReturnValue(
-        mockQueryBuilder as any,
-      );
+      prRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
       const startDate = new Date('2024-01-01');
       const endDate = new Date('2024-01-31');
@@ -432,9 +440,7 @@ describe('ReportsService', () => {
         getCount: jest.fn().mockResolvedValue(2),
       };
 
-      prRepository.createQueryBuilder.mockReturnValue(
-        mockQueryBuilder as any,
-      );
+      prRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
       const startDate = new Date('2024-01-01');
       const endDate = new Date('2024-01-31');
@@ -578,4 +584,3 @@ describe('ReportsService', () => {
     });
   });
 });
-

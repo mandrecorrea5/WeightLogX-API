@@ -7,21 +7,15 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { I18nService } from 'nestjs-i18n';
 
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly logger = new Logger(AllExceptionsFilter.name);
 
-  constructor(private readonly i18n: I18nService<Record<string, unknown>>) { }
-
   async catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
-
-    // Extract locale from request
-    const locale = this.extractLocale(request);
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
@@ -31,17 +25,21 @@ export class AllExceptionsFilter implements ExceptionFilter {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
 
+      // Para HttpException, assumimos que a mensagem já foi traduzida pelo serviço
+      // Não tentamos traduzir novamente para evitar recursão infinita
       if (typeof exceptionResponse === 'string') {
-        message = await this.translateMessage(exceptionResponse, locale);
+        message = exceptionResponse;
       } else if (typeof exceptionResponse === 'object') {
         const responseObj = exceptionResponse as any;
-        message = responseObj.message
-          ? await this.translateMessage(responseObj.message, locale)
-          : message;
-
-        if (Array.isArray(responseObj.message)) {
-          errors = responseObj.message;
-        } else if (responseObj.errors) {
+        if (responseObj.message) {
+          if (Array.isArray(responseObj.message)) {
+            errors = responseObj.message;
+            message = responseObj.message[0] || message;
+          } else {
+            message = responseObj.message;
+          }
+        }
+        if (responseObj.errors) {
           errors = responseObj.errors;
         }
       }
@@ -78,39 +76,28 @@ export class AllExceptionsFilter implements ExceptionFilter {
       }
     }
 
-    const errorResponse = {
+    const errorResponse: any = {
       statusCode: status,
       timestamp: new Date().toISOString(),
       // Security: Don't expose full path in production for sensitive endpoints
-      path: process.env.NODE_ENV === 'production' && request.url.includes('/api/auth')
-        ? '/api/auth/*'
-        : request.url,
+      path:
+        process.env.NODE_ENV === 'production' &&
+        request.url.includes('/api/auth')
+          ? '/api/auth/*'
+          : request.url,
       message,
       ...(errors.length > 0 && { errors }),
     };
 
+    // Incluir dados adicionais do erro se existirem (como existingExercise)
+    if (exception instanceof HttpException) {
+      const exceptionResponse = exception.getResponse();
+      if (typeof exceptionResponse === 'object' && (exceptionResponse as any).existingExercise) {
+        errorResponse.existingExercise = (exceptionResponse as any).existingExercise;
+      }
+    }
+
     response.status(status).json(errorResponse);
   }
 
-  private extractLocale(request: Request): string {
-    const acceptLanguage = request.headers['accept-language'];
-    if (acceptLanguage) {
-      const locale = acceptLanguage.split(',')[0].split('-')[0];
-      if (locale === 'en') return 'en';
-      if (locale === 'pt') return 'pt-BR';
-    }
-    return 'pt-BR';
-  }
-
-  private async translateMessage(
-    key: string,
-    locale: string,
-  ): Promise<string> {
-    try {
-      return await this.i18n.translate(key, { lang: locale });
-    } catch {
-      return key;
-    }
-  }
 }
-

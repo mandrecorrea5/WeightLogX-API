@@ -27,4 +27,3 @@ export class ChangePasswordDto {
   @IsString()
   confirmPassword: string;
 }
-

@@ -48,4 +48,3 @@ export class WorkoutEntity {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }
-

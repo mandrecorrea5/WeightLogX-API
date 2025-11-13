@@ -8,5 +8,4 @@ import { MetricsService } from './metrics.service';
   providers: [MetricsService],
   exports: [MetricsService],
 })
-export class MetricsModule { }
-
+export class MetricsModule {}

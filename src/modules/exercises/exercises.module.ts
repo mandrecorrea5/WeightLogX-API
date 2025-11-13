@@ -6,13 +6,9 @@ import { ExercisesService } from './exercises.service';
 import { ExerciseEntity } from './entities/exercise.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([ExerciseEntity]),
-    I18nModule,
-  ],
+  imports: [TypeOrmModule.forFeature([ExerciseEntity]), I18nModule],
   controllers: [ExercisesController],
   providers: [ExercisesService],
   exports: [ExercisesService],
 })
-export class ExercisesModule { }
-
+export class ExercisesModule {}

@@ -24,6 +24,7 @@ import {
 import { I18nLang } from 'nestjs-i18n';
 import { WorkoutsService } from './workouts.service';
 import { CreateWorkoutDto } from './dto/create-workout.dto';
+import { UpdateWorkoutDto } from './dto/update-workout.dto';
 import { CreateWorkoutResponseDto } from './dto/create-workout-response.dto';
 import { WorkoutListResponseDto } from './dto/workout-list-response.dto';
 import { WorkoutDetailsResponseDto } from './dto/workout-details-response.dto';
@@ -35,7 +36,7 @@ import { UserEntity } from '../../database/entities/user.entity';
 @Controller('workouts')
 @ApiBearerAuth('JWT-auth')
 export class WorkoutsController {
-  constructor(private readonly workoutsService: WorkoutsService) { }
+  constructor(private readonly workoutsService: WorkoutsService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -57,10 +58,30 @@ export class WorkoutsController {
 
   @Get()
   @ApiOperation({ summary: 'Listar treinos do usuário' })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Número da página' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Itens por página' })
-  @ApiQuery({ name: 'startDate', required: false, type: String, description: 'Data inicial (ISO 8601)' })
-  @ApiQuery({ name: 'endDate', required: false, type: String, description: 'Data final (ISO 8601)' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Número da página',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Itens por página',
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Data inicial (ISO 8601)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'Data final (ISO 8601)',
+  })
   @ApiResponse({
     status: 200,
     description: 'Lista de treinos',
@@ -125,7 +146,7 @@ export class WorkoutsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Atualizar um treino' })
   @ApiParam({ name: 'id', description: 'ID do treino' })
-  @ApiBody({ type: CreateWorkoutDto })
+  @ApiBody({ type: UpdateWorkoutDto })
   @ApiResponse({
     status: 200,
     description: 'Treino atualizado com sucesso',
@@ -137,7 +158,7 @@ export class WorkoutsController {
   async update(
     @CurrentUser() user: UserEntity,
     @Param('id') id: string,
-    @Body() updateWorkoutDto: CreateWorkoutDto,
+    @Body() updateWorkoutDto: UpdateWorkoutDto,
     @I18nLang() locale: string = 'pt-BR',
   ): Promise<CreateWorkoutResponseDto> {
     return this.workoutsService.update(id, user.id, updateWorkoutDto, locale);
@@ -161,4 +182,3 @@ export class WorkoutsController {
     return this.workoutsService.remove(id, user.id, locale);
   }
 }
-

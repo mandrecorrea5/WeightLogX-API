@@ -10,6 +10,4 @@ import { TrainerEntity } from './entities/trainer.entity';
   providers: [TrainersService],
   exports: [TrainersService, TypeOrmModule],
 })
-export class TrainersModule { }
-
-
+export class TrainersModule {}

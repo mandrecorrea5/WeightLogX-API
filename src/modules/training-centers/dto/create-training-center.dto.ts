@@ -88,4 +88,3 @@ export class CreateTrainingCenterDto {
   @IsString()
   country?: string;
 }
-

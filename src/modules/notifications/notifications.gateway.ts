@@ -1,4 +1,12 @@
-import { WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect, SubscribeMessage, MessageBody, ConnectedSocket } from '@nestjs/websockets';
+import {
+  WebSocketGateway,
+  WebSocketServer,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+  SubscribeMessage,
+  MessageBody,
+  ConnectedSocket,
+} from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -12,7 +20,9 @@ import { NotificationsService } from './notifications.service';
   transports: ['websocket', 'polling'],
   namespace: '/ws',
 })
-export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class NotificationsGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer() server!: Server;
 
   private userSockets: Map<string, Set<string>> = new Map();
@@ -21,11 +31,15 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly notificationsService: NotificationsService,
-  ) { }
+  ) {}
 
   async handleConnection(client: Socket): Promise<void> {
     try {
-      const token = client.handshake.auth?.token || client.handshake.headers['authorization']?.toString().replace('Bearer ', '');
+      const token =
+        client.handshake.auth?.token ||
+        client.handshake.headers['authorization']
+          ?.toString()
+          .replace('Bearer ', '');
       if (!token) {
         client.disconnect(true);
         return;
@@ -39,10 +53,11 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
       }
 
       // store userId in socket
-      (client.data as any).userId = userId;
+      client.data.userId = userId;
 
       // track sockets
-      if (!this.userSockets.has(userId)) this.userSockets.set(userId, new Set());
+      if (!this.userSockets.has(userId))
+        this.userSockets.set(userId, new Set());
       this.userSockets.get(userId)!.add(client.id);
 
       // join user room
@@ -53,7 +68,7 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   }
 
   async handleDisconnect(client: Socket): Promise<void> {
-    const userId: string | undefined = (client.data as any)?.userId;
+    const userId: string | undefined = client.data?.userId;
     if (!userId) return;
     const set = this.userSockets.get(userId);
     if (set) {
@@ -63,27 +78,38 @@ export class NotificationsGateway implements OnGatewayConnection, OnGatewayDisco
   }
 
   @SubscribeMessage('notification:read')
-  async onRead(@ConnectedSocket() client: Socket, @MessageBody() payload: { id: string }) {
-    const userId: string = (client.data as any).userId;
+  async onRead(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: { id: string },
+  ) {
+    const userId: string = client.data.userId;
     await this.notificationsService.markAsRead(userId, payload.id);
     client.emit('notification:read', { id: payload.id, success: true });
     const unreadCount = await this.notificationsService.getUnreadCount(userId);
-    this.server.to(`user:${userId}`).emit('unread_count:update', { count: unreadCount });
+    this.server
+      .to(`user:${userId}`)
+      .emit('unread_count:update', { count: unreadCount });
   }
 
   @SubscribeMessage('notification:read_all')
   async onReadAll(@ConnectedSocket() client: Socket) {
-    const userId: string = (client.data as any).userId;
+    const userId: string = client.data.userId;
     await this.notificationsService.markAllAsRead(userId);
     this.server.to(`user:${userId}`).emit('unread_count:update', { count: 0 });
     client.emit('notification:read_all', { success: true });
   }
 
-  public async sendNotificationToUser(userId: string, notification: any): Promise<void> {
+  public async sendNotificationToUser(
+    userId: string,
+    notification: any,
+  ): Promise<void> {
     // persist and emit
-    const saved = await this.notificationsService.saveNotification(notification);
+    const saved =
+      await this.notificationsService.saveNotification(notification);
     this.server.to(`user:${userId}`).emit('notification:new', saved);
     const unreadCount = await this.notificationsService.getUnreadCount(userId);
-    this.server.to(`user:${userId}`).emit('unread_count:update', { count: unreadCount });
+    this.server
+      .to(`user:${userId}`)
+      .emit('unread_count:update', { count: unreadCount });
   }
 }

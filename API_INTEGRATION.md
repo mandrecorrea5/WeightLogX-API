@@ -9,12 +9,25 @@ This document describes the public API surface, authentication, request/response
 
 ### Authentication
 - Scheme: Bearer JWT in `Authorization: Bearer <token>`
-- Issued on login/register; include `sub` (user id) and expiry.
+- Tokens only são emitidos após confirmação do registro.
 
 Endpoints:
-- `POST /api/auth/register` – body: `{ email, fullName, password }`
-- `POST /api/auth/login` – body: `{ email, password }`
-- `GET /api/auth/profile` – returns current user profile
+- `POST /api/auth/register` – body: `{ fullName, email, phone (digits), birthDate (YYYY-MM-DD), verificationMethod: 'email'|'sms', password, confirmPassword }` → resposta: `{ message, verificationId, verificationMethod, target }`. **Usuário criado com status `pending` - não pode fazer login até verificar.**
+- `POST /api/auth/register/resend-code` – body: `{ email, method: 'email'|'sms', verificationId?, phone? }` → resposta: `{ message, verificationId, target, method }`. **Limite: 3 reenvios por hora.**
+- `POST /api/auth/register/verify` – body: `{ email, method, code (6 dígitos), verificationId? }` → resposta: `{ message }`. **Ativa a conta (status muda de `pending` para `active`).**
+- `POST /api/auth/login` – body: `{ email, password }` (apenas usuários confirmados - bloqueia usuários `pending`).
+- `GET /api/auth/profile` – retorna o perfil do usuário autenticado.
+
+**📖 Documentação completa do fluxo de registro**: Veja `FRONTEND_REGISTRATION_GUIDE.md` para guia detalhado de integração.
+
+### Recuperação de Senha (com verificação por código)
+
+- `POST /api/auth/forgot-password` – body: `{ email, verificationMethod: 'email'|'sms' }` → resposta: `{ message, verificationId, verificationMethod, target }`. **Inicia recuperação de senha com código de verificação.**
+- `POST /api/auth/forgot-password/resend-code` – body: `{ email, method: 'email'|'sms', verificationId?, phone? }` → resposta: `{ message, verificationId, target, method }`. **Reenvia código de verificação (limite: 3 por hora).**
+- `POST /api/auth/forgot-password/verify` – body: `{ email, method, code (6 dígitos), verificationId? }` → resposta: `{ message }`. **Valida código de verificação (obrigatório antes de reset-password).**
+- `POST /api/auth/reset-password` – body: `{ email, newPassword, confirmPassword }` → resposta: `{ message }`. **Redefine senha após validação do código (requer código verificado).**
+
+**📖 Documentação completa do fluxo de recuperação de senha**: Veja `FRONTEND_PASSWORD_RESET_GUIDE.md` para guia detalhado de integração.
 
 Response (example profile):
 ```
@@ -77,14 +90,18 @@ Set trainer response (shape equals profile):
 - `POST /api/workouts` – create workout
 - `GET /api/workouts` – list workouts (supports pagination: `page`, `limit`)
 - `GET /api/workouts/:id` – workout details
-- `PUT /api/workouts/:id` – update workout (uses same body as POST)
+- `PUT /api/workouts/:id` – update workout (partial update supported: can update only `date`, only `exercises`, or both)
 - `DELETE /api/workouts/:id` – delete workout (returns 204 No Content on success)
 - `PUT /api/workouts/:id/send-to-trainer` – marks workout as sent; triggers notification
 
 **Note:** 
-- UPDATE endpoint validates ownership, deletes old exercises/series, creates new ones, and recalculates PRs
+- UPDATE endpoint supports partial updates: you can send only `date`, only `exercises`, or both. At least one field must be provided.
+- When updating `exercises`, the endpoint validates ownership, deletes old exercises/series, creates new ones, and recalculates PRs
+- When updating only `date`, PRs are not recalculated
 - DELETE endpoint validates ownership (only the workout owner can delete it). Cascade delete automatically removes associated exercises and series configs
 - Both UPDATE and DELETE remove related PRs and recalculate them if needed
+
+**📖 Complete Workout Update API documentation**: See `WORKOUT_UPDATE_API_DOCUMENTATION.md` for detailed integration guide.
 
 **Create/Update workout body:**
 ```json
@@ -148,7 +165,9 @@ Send to trainer response:
 }
 ```
 
-**Note:** Todos os campos são opcionais no update (PATCH/PUT), mas pelo menos um deve ser fornecido.
+**Note:** 
+- Todos os campos são opcionais no update (PATCH/PUT), mas pelo menos um deve ser fornecido.
+- When creating an exercise, if an exercise with the same name already exists, the API returns `409 Conflict` with the existing exercise object in the response for frontend convenience.
 
 ### Training Centers
 - `GET /api/training-centers` – lista centros (suporta `?search=term` para nome/sigla/treinador)
@@ -220,6 +239,37 @@ Send to trainer response:
   "updatedAt": "2025-01-10T12:00:00.000Z"
 }
 ```
+
+### Ranking
+- `GET /api/ranking/center?limit={number}` – get ranking of users from the same training center
+
+**Query Parameters:**
+- `limit` (optional): Number between 1-100 to limit results. If not provided, returns all users.
+
+**Response:**
+```json
+{
+  "users": [
+    {
+      "id": "a6f3a315-2529-40b7-86ef-9847593602e9",
+      "name": "Ana Souza",
+      "profileImageUrl": "https://example.com/profile.jpg",
+      "quantidadeTreinos": 128,
+      "position": 1
+    }
+  ],
+  "total": 25
+}
+```
+
+**Notes:**
+- Only users with at least 1 executed workout appear in the ranking
+- Ranking is ordered by `quantidadeTreinos` (descending)
+- Only users from the same training center as the authenticated user are returned
+- Only `ACTIVE` users are included
+- If user has no training center, returns empty array
+
+**📖 Complete Ranking API documentation**: See `RANKING_API_DOCUMENTATION.md` for detailed integration guide.
 
 ### Reports
 - `GET /api/reports?type={geral|exercicio|carga}&timeFilter={7d|30d|3m|1y}&exerciseId={uuid}` – generate workout reports
@@ -419,6 +469,11 @@ curl -s "http://localhost:3000/api/reports?type=exercicio&timeFilter=30d&exercis
   -H "Authorization: Bearer $TOKEN" \
   -H "Accept-Language: pt-BR"
 
+# Get ranking (top 10)
+curl -s "http://localhost:3000/api/ranking/center?limit=10" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Accept-Language: pt-BR"
+
 # Update workout
 curl -X PUT "http://localhost:3000/api/workouts/{workoutId}" \
   -H "Authorization: Bearer $TOKEN" \
@@ -546,7 +601,24 @@ const response = await fetch(`http://localhost:3000/api/exercises/${exerciseId}`
 });
 ```
 
-**5. Update User Profile:**
+**5. Get Ranking:**
+```javascript
+// Obter top 10 do ranking
+const response = await fetch('http://localhost:3000/api/ranking/center?limit=10', {
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Accept-Language': 'pt-BR'
+  }
+});
+const ranking = await response.json();
+// ranking.users contém array de usuários ordenados por quantidadeTreinos
+// ranking.total contém o total de usuários no ranking completo
+ranking.users.forEach(user => {
+  console.log(`${user.position}. ${user.name} - ${user.quantidadeTreinos} treinos`);
+});
+```
+
+**6. Update User Profile:**
 ```javascript
 const response = await fetch('http://localhost:3000/api/user/profile', {
   method: 'PUT',

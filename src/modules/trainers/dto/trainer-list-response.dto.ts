@@ -8,5 +8,3 @@ export class TrainerListResponseDto {
   })
   trainers: TrainerResponseDto[];
 }
-
-

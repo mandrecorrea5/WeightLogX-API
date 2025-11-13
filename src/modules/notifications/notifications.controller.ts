@@ -8,7 +8,7 @@ import { UserEntity } from '../../database/entities/user.entity';
 @ApiBearerAuth('JWT-auth')
 @Controller('notifications')
 export class NotificationsController {
-  constructor(private readonly notificationsService: NotificationsService) { }
+  constructor(private readonly notificationsService: NotificationsService) {}
 
   @Get()
   @ApiOperation({ summary: 'List notifications' })
@@ -37,7 +37,10 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Mark all notifications as read' })
   async markAll(@CurrentUser() user: UserEntity) {
     const updatedCount = await this.notificationsService.markAllAsRead(user.id);
-    return { message: 'Todas as notificações foram marcadas como lidas', updatedCount };
+    return {
+      message: 'Todas as notificações foram marcadas como lidas',
+      updatedCount,
+    };
   }
 
   @Get('settings')

@@ -34,4 +34,3 @@ export class CreateExerciseDto {
   @MinLength(1)
   abbreviationEn: string;
 }
-

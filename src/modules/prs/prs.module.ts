@@ -26,5 +26,4 @@ import { NotificationsModule } from '../notifications/notifications.module';
   providers: [PrsService],
   exports: [PrsService],
 })
-export class PrsModule { }
-
+export class PrsModule {}

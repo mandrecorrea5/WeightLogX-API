@@ -53,7 +53,8 @@
       "invalidConfig": "Series configuration must be an array"
     },
     "update": {
-      "success": "Workout updated successfully"
+      "success": "Workout updated successfully",
+      "noFields": "At least date or exercises must be provided to update the workout"
     },
     "notFound": "Workout not found",
     "forbidden": "You don't have permission to access this workout"

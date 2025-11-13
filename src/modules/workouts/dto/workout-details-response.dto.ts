@@ -1,4 +1,10 @@
-import { IsString, IsNumber, IsBoolean, IsDateString, IsArray } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsBoolean,
+  IsDateString,
+  IsArray,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class SeriesConfigResponseDto {
@@ -63,7 +69,8 @@ export class ExerciseDetailsDto {
   abbreviation: string;
 
   @ApiProperty({
-    description: 'Se é exercício conjugado (dois exercícios juntos) - apenas quando houver agrupamento',
+    description:
+      'Se é exercício conjugado (dois exercícios juntos) - apenas quando houver agrupamento',
     example: false,
     required: false,
   })
@@ -107,4 +114,3 @@ export class WorkoutDetailsResponseDto {
   @IsNumber()
   totalVolume: number;
 }
-

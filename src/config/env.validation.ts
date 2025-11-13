@@ -29,22 +29,33 @@ export function validateEnvironment(): void {
   // Validações específicas
   if (process.env.NODE_ENV === 'production') {
     if (process.env.JWT_SECRET && process.env.JWT_SECRET.length < 32) {
-      errors.push('JWT_SECRET must be at least 32 characters long in production');
+      errors.push(
+        'JWT_SECRET must be at least 32 characters long in production',
+      );
     }
 
     if (process.env.CORS_ORIGIN === '*' || !process.env.CORS_ORIGIN) {
-      errors.push('CORS_ORIGIN must be specified and cannot be "*" in production');
+      errors.push(
+        'CORS_ORIGIN must be specified and cannot be "*" in production',
+      );
     }
 
-    if (process.env.DATABASE_PASSWORD === 'password_segura' || !process.env.DATABASE_PASSWORD) {
-      errors.push('DATABASE_PASSWORD must be changed from default value in production');
+    if (
+      process.env.DATABASE_PASSWORD === 'password_segura' ||
+      !process.env.DATABASE_PASSWORD
+    ) {
+      errors.push(
+        'DATABASE_PASSWORD must be changed from default value in production',
+      );
     }
   }
 
   if (errors.length > 0) {
     console.error('❌ Environment validation failed:');
     errors.forEach((error) => console.error(`  - ${error}`));
-    console.error('\nPlease fix the environment variables and restart the application.');
+    console.error(
+      '\nPlease fix the environment variables and restart the application.',
+    );
     process.exit(1);
   }
 
@@ -52,4 +63,3 @@ export function validateEnvironment(): void {
     console.log('✅ Environment variables validated successfully');
   }
 }
-

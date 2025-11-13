@@ -14,7 +14,7 @@ export class NotificationsService {
     private readonly settingsRepo: Repository<NotificationSettingsEntity>,
     @InjectRepository(DeviceTokenEntity)
     private readonly deviceTokensRepo: Repository<DeviceTokenEntity>,
-  ) { }
+  ) {}
 
   async saveNotification(notification: {
     userId: string;
@@ -33,7 +33,12 @@ export class NotificationsService {
     return this.notificationsRepo.save(entity);
   }
 
-  async listNotifications(userId: string, page = 1, limit = 20, unreadOnly = false) {
+  async listNotifications(
+    userId: string,
+    page = 1,
+    limit = 20,
+    unreadOnly = false,
+  ) {
     const take = Math.min(Math.max(limit, 1), 100);
     const skip = (Math.max(page, 1) - 1) * take;
 
@@ -61,7 +66,10 @@ export class NotificationsService {
   }
 
   async markAsRead(userId: string, id: string): Promise<void> {
-    await this.notificationsRepo.update({ id, userId }, { read: true, readAt: new Date() });
+    await this.notificationsRepo.update(
+      { id, userId },
+      { read: true, readAt: new Date() },
+    );
   }
 
   async markAllAsRead(userId: string): Promise<number> {
@@ -88,12 +96,22 @@ export class NotificationsService {
     return settings;
   }
 
-  async updateSettings(userId: string, partial: Partial<NotificationSettingsEntity>) {
+  async updateSettings(
+    userId: string,
+    partial: Partial<NotificationSettingsEntity>,
+  ) {
     await this.settingsRepo.save({ userId, ...partial });
     return this.getSettings(userId);
   }
 
-  async registerDeviceToken(userId: string, payload: { deviceToken: string; platform: 'ios' | 'android'; deviceId?: string }) {
+  async registerDeviceToken(
+    userId: string,
+    payload: {
+      deviceToken: string;
+      platform: 'ios' | 'android';
+      deviceId?: string;
+    },
+  ) {
     const entity = this.deviceTokensRepo.create({
       userId,
       deviceToken: payload.deviceToken,
@@ -113,7 +131,15 @@ export class NotificationsService {
   }
 
   // Helper para enviar e persistir notificação de um evento de negócio
-  async sendToUser(userId: string, notification: { type: string; title: string; body: string; data?: Record<string, unknown> }) {
+  async sendToUser(
+    userId: string,
+    notification: {
+      type: string;
+      title: string;
+      body: string;
+      data?: Record<string, unknown>;
+    },
+  ) {
     return this.saveNotification({ userId, ...notification });
   }
 }

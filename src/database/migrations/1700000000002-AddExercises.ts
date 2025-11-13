@@ -87,4 +87,3 @@ export class AddExercises1700000000002 implements MigrationInterface {
     await queryRunner.dropTable('exercises', true);
   }
 }
-

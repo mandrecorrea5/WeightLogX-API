@@ -27,9 +27,12 @@ export class UserService {
     @InjectRepository(TrainingCenterEntity)
     private readonly trainingCenterRepository: Repository<TrainingCenterEntity>,
     private readonly i18n: I18nService,
-  ) { }
+  ) {}
 
-  async getProfile(userId: string, locale: string = 'pt-BR'): Promise<ProfileResponseDto> {
+  async getProfile(
+    userId: string,
+    locale: string = 'pt-BR',
+  ): Promise<ProfileResponseDto> {
     const user = await this.userRepository.findOne({
       where: { id: userId },
       relations: ['role', 'trainingCenter'],
@@ -70,7 +73,10 @@ export class UserService {
       let date: Date;
 
       // Tenta parsear como ISO 8601 primeiro (formato mais comum em APIs)
-      if (updateProfileDto.birthDate.includes('T') || updateProfileDto.birthDate.match(/^\d{4}-\d{2}-\d{2}/)) {
+      if (
+        updateProfileDto.birthDate.includes('T') ||
+        updateProfileDto.birthDate.match(/^\d{4}-\d{2}-\d{2}/)
+      ) {
         // ISO 8601: 1984-06-19T00:00:00.000Z ou 1984-06-19
         date = new Date(updateProfileDto.birthDate);
       } else if (updateProfileDto.birthDate.includes('/')) {
@@ -103,7 +109,9 @@ export class UserService {
         // Valida se tem pelo menos 10 dígitos (DDD + número)
         if (phoneDigits.length < 10 || phoneDigits.length > 11) {
           throw new BadRequestException(
-            await this.i18n.translate('validation.phoneFormat', { lang: locale }),
+            await this.i18n.translate('validation.phoneFormat', {
+              lang: locale,
+            }),
           );
         }
 
@@ -115,7 +123,10 @@ export class UserService {
     }
 
     if (updateProfileDto.trainingCenterId !== undefined) {
-      if (updateProfileDto.trainingCenterId === null || updateProfileDto.trainingCenterId === '') {
+      if (
+        updateProfileDto.trainingCenterId === null ||
+        updateProfileDto.trainingCenterId === ''
+      ) {
         user.trainingCenterId = null;
         user.trainingCenterName = null;
         user.trainingCenter = null;
@@ -126,7 +137,9 @@ export class UserService {
 
         if (!trainingCenter) {
           throw new NotFoundException(
-            await this.i18n.translate('trainingCenters.notFound', { lang: locale }),
+            await this.i18n.translate('trainingCenters.notFound', {
+              lang: locale,
+            }),
           );
         }
 
@@ -136,7 +149,8 @@ export class UserService {
       }
     } else if (updateProfileDto.trainingCenter !== undefined) {
       const trainingCenterName =
-        updateProfileDto.trainingCenter && updateProfileDto.trainingCenter.trim().length > 0
+        updateProfileDto.trainingCenter &&
+        updateProfileDto.trainingCenter.trim().length > 0
           ? updateProfileDto.trainingCenter.trim()
           : null;
 
@@ -186,7 +200,9 @@ export class UserService {
 
     if (!isPasswordValid) {
       throw new UnauthorizedException(
-        await this.i18n.translate('user.password.currentIncorrect', { lang: locale }),
+        await this.i18n.translate('user.password.currentIncorrect', {
+          lang: locale,
+        }),
       );
     }
 
@@ -296,14 +312,20 @@ export class UserService {
     trainerId: string,
     locale: string = 'pt-BR',
   ): Promise<ProfileResponseDto> {
-    const athlete = await this.userRepository.findOne({ where: { id: athleteId }, relations: ['role', 'trainingCenter'] });
+    const athlete = await this.userRepository.findOne({
+      where: { id: athleteId },
+      relations: ['role', 'trainingCenter'],
+    });
     if (!athlete) {
       throw new NotFoundException(
         await this.i18n.translate('user.profile.notFound', { lang: locale }),
       );
     }
 
-    const trainer = await this.userRepository.findOne({ where: { id: trainerId }, relations: ['role', 'trainingCenter'] });
+    const trainer = await this.userRepository.findOne({
+      where: { id: trainerId },
+      relations: ['role', 'trainingCenter'],
+    });
     if (!trainer) {
       throw new NotFoundException(
         await this.i18n.translate('user.profile.notFound', { lang: locale }),
@@ -313,7 +335,10 @@ export class UserService {
     athlete.trainerId = trainer.id;
     await this.userRepository.save(athlete);
 
-    const reloaded = await this.userRepository.findOne({ where: { id: athleteId }, relations: ['role', 'trainingCenter'] });
+    const reloaded = await this.userRepository.findOne({
+      where: { id: athleteId },
+      relations: ['role', 'trainingCenter'],
+    });
     return this.mapUserToProfileResponse(reloaded!);
   }
 
@@ -321,7 +346,10 @@ export class UserService {
     athleteId: string,
     locale: string = 'pt-BR',
   ): Promise<ProfileResponseDto> {
-    const athlete = await this.userRepository.findOne({ where: { id: athleteId }, relations: ['role', 'trainingCenter'] });
+    const athlete = await this.userRepository.findOne({
+      where: { id: athleteId },
+      relations: ['role', 'trainingCenter'],
+    });
     if (!athlete) {
       throw new NotFoundException(
         await this.i18n.translate('user.profile.notFound', { lang: locale }),
@@ -331,7 +359,10 @@ export class UserService {
     athlete.trainerId = null;
     await this.userRepository.save(athlete);
 
-    const reloaded = await this.userRepository.findOne({ where: { id: athleteId }, relations: ['role', 'trainingCenter'] });
+    const reloaded = await this.userRepository.findOne({
+      where: { id: athleteId },
+      relations: ['role', 'trainingCenter'],
+    });
     return this.mapUserToProfileResponse(reloaded!);
   }
 
@@ -349,16 +380,16 @@ export class UserService {
     const trainingCenterSummary =
       user.trainingCenter !== undefined && user.trainingCenter !== null
         ? {
-          id: user.trainingCenter.id,
-          name: user.trainingCenter.name,
-          abbreviation: user.trainingCenter.abbreviation,
-        }
+            id: user.trainingCenter.id,
+            name: user.trainingCenter.name,
+            abbreviation: user.trainingCenter.abbreviation,
+          }
         : user.trainingCenterId
           ? {
-            id: user.trainingCenterId,
-            name: user.trainingCenterName ?? '',
-            abbreviation: null,
-          }
+              id: user.trainingCenterId,
+              name: user.trainingCenterName ?? '',
+              abbreviation: null,
+            }
           : null;
 
     return {
@@ -375,4 +406,3 @@ export class UserService {
     };
   }
 }
-

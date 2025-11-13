@@ -23,7 +23,7 @@ export class PrsService {
     private readonly seriesConfigRepository: Repository<SeriesConfigEntity>,
     private readonly i18n: I18nService,
     private readonly notificationsService: NotificationsService,
-  ) { }
+  ) {}
 
   /**
    * Calcula e atualiza PRs baseado em um treino salvo
@@ -192,9 +192,9 @@ export class PrsService {
   ): Promise<string> {
     // Mapeamento básico de IDs para nomes
     // Em produção, isso pode vir de uma tabela de exercícios ou constante
-    const exerciseNames: Record<string, { 'pt-BR': string; 'en': string }> = {
-      '1': { 'pt-BR': 'Arranco', 'en': 'Snatch' },
-      '2': { 'pt-BR': 'Arremesso', 'en': 'Clean and Jerk' },
+    const exerciseNames: Record<string, { 'pt-BR': string; en: string }> = {
+      '1': { 'pt-BR': 'Arranco', en: 'Snatch' },
+      '2': { 'pt-BR': 'Arremesso', en: 'Clean and Jerk' },
       // Adicionar mais exercícios conforme necessário
     };
 
@@ -208,4 +208,3 @@ export class PrsService {
     return `Exercise ${exerciseId}`;
   }
 }
-

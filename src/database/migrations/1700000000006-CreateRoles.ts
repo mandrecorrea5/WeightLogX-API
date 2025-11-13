@@ -63,4 +63,3 @@ export class CreateRoles1700000000006 implements MigrationInterface {
     await queryRunner.dropTable('roles', true);
   }
 }
-

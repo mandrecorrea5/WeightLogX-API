@@ -23,4 +23,3 @@ export class SendToTrainerResponseDto {
   @IsDateString()
   sentAt: string;
 }
-

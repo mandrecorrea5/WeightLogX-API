@@ -1,4 +1,12 @@
-import { Column, CreateDateColumn, Entity, OneToOne, PrimaryColumn, UpdateDateColumn, JoinColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  OneToOne,
+  PrimaryColumn,
+  UpdateDateColumn,
+  JoinColumn,
+} from 'typeorm';
 import { UserEntity } from '../../../database/entities/user.entity';
 
 @Entity('notification_settings')

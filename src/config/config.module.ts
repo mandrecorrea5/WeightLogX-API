@@ -4,15 +4,15 @@ import databaseConfig from './database.config';
 import jwtConfig from './jwt.config';
 import uploadConfig from './upload.config';
 import tracingConfig from './tracing.config';
+import authConfig from './auth.config';
 
 @Module({
   imports: [
     NestConfigModule.forRoot({
       isGlobal: true,
-      load: [databaseConfig, jwtConfig, uploadConfig, tracingConfig],
+      load: [databaseConfig, jwtConfig, uploadConfig, tracingConfig, authConfig],
       envFilePath: ['.env.local', '.env'],
     }),
   ],
 })
 export class ConfigModule { }
-

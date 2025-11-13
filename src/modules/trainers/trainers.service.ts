@@ -13,7 +13,7 @@ export class TrainersService {
     @InjectRepository(TrainerEntity)
     private readonly trainerRepository: Repository<TrainerEntity>,
     private readonly i18n: I18nService,
-  ) { }
+  ) {}
 
   async create(
     createTrainerDto: CreateTrainerDto,
@@ -46,9 +46,7 @@ export class TrainersService {
     locale: string = 'pt-BR',
     search?: string,
   ): Promise<TrainerListResponseDto> {
-    const where = search
-      ? { name: ILike(`%${search.trim()}%`) }
-      : undefined;
+    const where = search ? { name: ILike(`%${search.trim()}%`) } : undefined;
 
     const trainers = await this.trainerRepository.find({
       where,
@@ -73,5 +71,3 @@ export class TrainersService {
     };
   }
 }
-
-

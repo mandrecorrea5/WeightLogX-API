@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike } from 'typeorm';
 import { I18nService } from 'nestjs-i18n';
@@ -17,14 +21,16 @@ export class TrainingCentersService {
     @InjectRepository(TrainerEntity)
     private readonly trainerRepository: Repository<TrainerEntity>,
     private readonly i18n: I18nService,
-  ) { }
+  ) {}
 
   async create(
     createTrainingCenterDto: CreateTrainingCenterDto,
     locale: string = 'pt-BR',
   ): Promise<TrainingCenterResponseDto> {
     const normalizedName = createTrainingCenterDto.name.trim();
-    const normalizedAbbreviation = createTrainingCenterDto.abbreviation.trim().toUpperCase();
+    const normalizedAbbreviation = createTrainingCenterDto.abbreviation
+      .trim()
+      .toUpperCase();
 
     const existingTrainingCenter = await this.trainingCenterRepository.findOne({
       where: { name: ILike(normalizedName) },
@@ -72,12 +78,14 @@ export class TrainingCentersService {
       country: createTrainingCenterDto.country?.trim() || null,
     });
 
-    const savedTrainingCenter = await this.trainingCenterRepository.save(trainingCenter);
+    const savedTrainingCenter =
+      await this.trainingCenterRepository.save(trainingCenter);
 
-    const trainingCenterWithRelations = await this.trainingCenterRepository.findOne({
-      where: { id: savedTrainingCenter.id },
-      relations: ['trainer'],
-    });
+    const trainingCenterWithRelations =
+      await this.trainingCenterRepository.findOne({
+        where: { id: savedTrainingCenter.id },
+        relations: ['trainer'],
+      });
 
     return this.mapToResponse(trainingCenterWithRelations!);
   }
@@ -159,13 +167,18 @@ export class TrainingCentersService {
     // Check if new name conflicts with existing training center
     if (
       updateTrainingCenterDto.name &&
-      updateTrainingCenterDto.name.trim().toLowerCase() !== trainingCenter.name.toLowerCase()
+      updateTrainingCenterDto.name.trim().toLowerCase() !==
+        trainingCenter.name.toLowerCase()
     ) {
-      const existingTrainingCenter = await this.trainingCenterRepository.findOne({
-        where: { name: ILike(updateTrainingCenterDto.name.trim()) },
-      });
+      const existingTrainingCenter =
+        await this.trainingCenterRepository.findOne({
+          where: { name: ILike(updateTrainingCenterDto.name.trim()) },
+        });
 
-      if (existingTrainingCenter && existingTrainingCenter.id !== trainingCenter.id) {
+      if (
+        existingTrainingCenter &&
+        existingTrainingCenter.id !== trainingCenter.id
+      ) {
         throw new ConflictException(
           await this.i18n.translate('trainingCenters.update.nameConflict', {
             lang: locale,
@@ -176,17 +189,28 @@ export class TrainingCentersService {
 
     if (
       updateTrainingCenterDto.abbreviation &&
-      updateTrainingCenterDto.abbreviation.trim().toUpperCase() !== trainingCenter.abbreviation
+      updateTrainingCenterDto.abbreviation.trim().toUpperCase() !==
+        trainingCenter.abbreviation
     ) {
       const existingAbbreviation = await this.trainingCenterRepository.findOne({
-        where: { abbreviation: ILike(updateTrainingCenterDto.abbreviation.trim().toUpperCase()) },
+        where: {
+          abbreviation: ILike(
+            updateTrainingCenterDto.abbreviation.trim().toUpperCase(),
+          ),
+        },
       });
 
-      if (existingAbbreviation && existingAbbreviation.id !== trainingCenter.id) {
+      if (
+        existingAbbreviation &&
+        existingAbbreviation.id !== trainingCenter.id
+      ) {
         throw new ConflictException(
-          await this.i18n.translate('trainingCenters.update.abbreviationConflict', {
-            lang: locale,
-          }),
+          await this.i18n.translate(
+            'trainingCenters.update.abbreviationConflict',
+            {
+              lang: locale,
+            },
+          ),
         );
       }
     }
@@ -194,7 +218,10 @@ export class TrainingCentersService {
     let trainer = trainingCenter.trainer ?? null;
 
     if (updateTrainingCenterDto.trainerId !== undefined) {
-      if (updateTrainingCenterDto.trainerId === null || updateTrainingCenterDto.trainerId === '') {
+      if (
+        updateTrainingCenterDto.trainerId === null ||
+        updateTrainingCenterDto.trainerId === ''
+      ) {
         trainingCenter.trainerId = null;
         trainingCenter.trainerName = null;
         trainer = null;
@@ -219,7 +246,8 @@ export class TrainingCentersService {
       trainingCenter.name = updateTrainingCenterDto.name.trim();
     }
     if (updateTrainingCenterDto.nickname !== undefined) {
-      trainingCenter.nickname = updateTrainingCenterDto.nickname?.trim() || null;
+      trainingCenter.nickname =
+        updateTrainingCenterDto.nickname?.trim() || null;
     }
     if (updateTrainingCenterDto.abbreviation !== undefined) {
       trainingCenter.abbreviation = updateTrainingCenterDto.abbreviation
@@ -227,7 +255,8 @@ export class TrainingCentersService {
         : trainingCenter.abbreviation;
     }
     if (updateTrainingCenterDto.trainer !== undefined) {
-      trainingCenter.trainerName = updateTrainingCenterDto.trainer?.trim() || null;
+      trainingCenter.trainerName =
+        updateTrainingCenterDto.trainer?.trim() || null;
     }
     if (updateTrainingCenterDto.address !== undefined) {
       trainingCenter.address = updateTrainingCenterDto.address?.trim() || null;
@@ -242,21 +271,27 @@ export class TrainingCentersService {
       trainingCenter.country = updateTrainingCenterDto.country?.trim() || null;
     }
 
-    const updatedTrainingCenter = await this.trainingCenterRepository.save(trainingCenter);
+    const updatedTrainingCenter =
+      await this.trainingCenterRepository.save(trainingCenter);
 
-    const trainingCenterWithRelations = await this.trainingCenterRepository.findOne({
-      where: { id: updatedTrainingCenter.id },
-      relations: ['trainer'],
-    });
+    const trainingCenterWithRelations =
+      await this.trainingCenterRepository.findOne({
+        where: { id: updatedTrainingCenter.id },
+        relations: ['trainer'],
+      });
 
     if (trainingCenterWithRelations) {
-      trainingCenterWithRelations.trainer = trainer ?? trainingCenterWithRelations.trainer ?? null;
+      trainingCenterWithRelations.trainer =
+        trainer ?? trainingCenterWithRelations.trainer ?? null;
     }
 
     return this.mapToResponse(trainingCenterWithRelations!);
   }
 
-  async remove(id: string, locale: string = 'pt-BR'): Promise<{ message: string }> {
+  async remove(
+    id: string,
+    locale: string = 'pt-BR',
+  ): Promise<{ message: string }> {
     const trainingCenter = await this.trainingCenterRepository.findOne({
       where: { id },
     });
@@ -273,9 +308,12 @@ export class TrainingCentersService {
 
     await this.trainingCenterRepository.remove(trainingCenter);
 
-    const message = await this.i18n.translate('trainingCenters.delete.success', {
-      lang: locale,
-    });
+    const message = await this.i18n.translate(
+      'trainingCenters.delete.success',
+      {
+        lang: locale,
+      },
+    );
 
     return { message };
   }
@@ -286,14 +324,14 @@ export class TrainingCentersService {
     const trainerSummary =
       trainingCenter.trainer !== undefined && trainingCenter.trainer !== null
         ? {
-          id: trainingCenter.trainer.id,
-          name: trainingCenter.trainer.name,
-        }
+            id: trainingCenter.trainer.id,
+            name: trainingCenter.trainer.name,
+          }
         : trainingCenter.trainerId && trainingCenter.trainerName
           ? {
-            id: trainingCenter.trainerId,
-            name: trainingCenter.trainerName,
-          }
+              id: trainingCenter.trainerId,
+              name: trainingCenter.trainerName,
+            }
           : null;
 
     return {
@@ -313,4 +351,3 @@ export class TrainingCentersService {
     };
   }
 }
-

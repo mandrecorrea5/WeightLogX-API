@@ -5,7 +5,7 @@ import { MetricsService } from './metrics.service';
 
 @Controller()
 export class MetricsController {
-  constructor(private readonly metricsService: MetricsService) { }
+  constructor(private readonly metricsService: MetricsService) {}
 
   @Get('metrics')
   @Public()
@@ -15,4 +15,3 @@ export class MetricsController {
     res.send(metrics);
   }
 }
-

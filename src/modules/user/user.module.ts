@@ -17,5 +17,4 @@ import { PermissionsService } from './services/permissions.service';
   providers: [UserService, PermissionsService],
   exports: [UserService, PermissionsService],
 })
-export class UserModule { }
-
+export class UserModule {}

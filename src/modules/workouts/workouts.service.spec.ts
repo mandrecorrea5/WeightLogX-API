@@ -1,14 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { I18nService } from 'nestjs-i18n';
 import { WorkoutsService } from './workouts.service';
 import { WorkoutEntity } from './entities/workout.entity';
 import { WorkoutExerciseEntity } from './entities/workout-exercise.entity';
 import { SeriesConfigEntity } from './entities/series-config.entity';
+import { PersonalRecordEntity } from '../prs/entities/personal-record.entity';
 import { CreateWorkoutDto } from './dto/create-workout.dto';
 import { PrsService } from '../prs/prs.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 describe('WorkoutsService', () => {
   let service: WorkoutsService;
@@ -76,8 +82,16 @@ describe('WorkoutsService', () => {
       translate: jest.fn(),
     };
 
+    const mockPersonalRecordRepository = {
+      delete: jest.fn(),
+    };
+
     const mockPrsService = {
       calculateAndUpdatePRs: jest.fn(),
+    };
+
+    const mockNotificationsService = {
+      sendWorkoutCreatedNotification: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -96,12 +110,20 @@ describe('WorkoutsService', () => {
           useValue: mockSeriesConfigRepository,
         },
         {
+          provide: getRepositoryToken(PersonalRecordEntity),
+          useValue: mockPersonalRecordRepository,
+        },
+        {
           provide: I18nService,
           useValue: mockI18nService,
         },
         {
           provide: PrsService,
           useValue: mockPrsService,
+        },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
         },
       ],
     }).compile();
@@ -196,7 +218,11 @@ describe('WorkoutsService', () => {
 
       i18nService.translate.mockResolvedValue('Treino salvo com sucesso');
 
-      const result = await service.create('user-uuid', createWorkoutDto, 'pt-BR');
+      const result = await service.create(
+        'user-uuid',
+        createWorkoutDto,
+        'pt-BR',
+      );
 
       expect(result).toBeDefined();
       expect(result.id).toBe('workout-uuid');
@@ -214,7 +240,9 @@ describe('WorkoutsService', () => {
         exercises: [],
       };
 
-      i18nService.translate.mockResolvedValue('Pelo menos um exercício é obrigatório');
+      i18nService.translate.mockResolvedValue(
+        'Pelo menos um exercício é obrigatório',
+      );
 
       await expect(
         service.create('user-uuid', invalidDto, 'pt-BR'),
@@ -226,8 +254,8 @@ describe('WorkoutsService', () => {
       );
     });
 
-    it('should throw BadRequestException if exercise has no series', async () => {
-      const invalidDto: CreateWorkoutDto = {
+    it('should allow exercise with empty config array', async () => {
+      const dtoWithEmptyConfig: CreateWorkoutDto = {
         date: '2024-01-15T10:00:00Z',
         exercises: [
           {
@@ -235,20 +263,37 @@ describe('WorkoutsService', () => {
             name: 'Arranco',
             abbreviation: 'A',
             isConjugated: false,
-            config: [],
+            config: [], // Empty config is allowed
           },
         ],
       };
 
-      i18nService.translate.mockResolvedValue('Cada exercício deve ter pelo menos uma série');
+      const createdWorkout = { ...mockWorkout };
+      const createdExercise = { ...mockExercise };
 
-      await expect(
-        service.create('user-uuid', invalidDto, 'pt-BR'),
-      ).rejects.toThrow(BadRequestException);
+      workoutRepository.create.mockReturnValue(createdWorkout as any);
+      workoutExerciseRepository.create.mockReturnValue(createdExercise as any);
+      
+      workoutRepository.save.mockResolvedValue({
+        ...createdWorkout,
+        exercises: [createdExercise],
+      } as any);
+
+      workoutRepository.findOne.mockResolvedValue({
+        ...createdWorkout,
+        exercises: [createdExercise],
+      } as any);
+
+      i18nService.translate.mockResolvedValue('Treino salvo com sucesso');
+
+      const result = await service.create('user-uuid', dtoWithEmptyConfig, 'pt-BR');
+
+      expect(result).toBeDefined();
+      expect(workoutRepository.save).toHaveBeenCalled();
     });
 
-    it('should throw BadRequestException if weights array is empty', async () => {
-      const invalidDto: CreateWorkoutDto = {
+    it('should allow weights array to be empty (series not yet executed)', async () => {
+      const dtoWithEmptyWeights: CreateWorkoutDto = {
         date: '2024-01-15T10:00:00Z',
         exercises: [
           {
@@ -262,18 +307,47 @@ describe('WorkoutsService', () => {
                 sets: 3,
                 reps: 3,
                 percentage: 75,
-                weights: [],
+                weights: [], // Empty weights is allowed (series not yet executed)
               },
             ],
           },
         ],
       };
 
-      i18nService.translate.mockResolvedValue('Todos os pesos devem ser preenchidos');
+      const createdWorkout = { ...mockWorkout };
+      const createdExercise = { ...mockExercise, id: 'exercise-uuid' };
+      const createdSeries = { ...mockSeriesConfig };
 
-      await expect(
-        service.create('user-uuid', invalidDto, 'pt-BR'),
-      ).rejects.toThrow(BadRequestException);
+      workoutRepository.create.mockReturnValue(createdWorkout as any);
+      workoutExerciseRepository.create.mockReturnValue(createdExercise as any);
+      seriesConfigRepository.create.mockReturnValue(createdSeries as any);
+      
+      workoutRepository.save.mockResolvedValue({
+        ...createdWorkout,
+        exercises: [
+          {
+            ...createdExercise,
+            seriesConfigs: [createdSeries],
+          },
+        ],
+      } as any);
+
+      workoutRepository.findOne.mockResolvedValue({
+        ...createdWorkout,
+        exercises: [
+          {
+            ...createdExercise,
+            seriesConfigs: [createdSeries],
+          },
+        ],
+      } as any);
+
+      i18nService.translate.mockResolvedValue('Treino salvo com sucesso');
+
+      const result = await service.create('user-uuid', dtoWithEmptyWeights, 'pt-BR');
+
+      expect(result).toBeDefined();
+      expect(workoutRepository.save).toHaveBeenCalled();
     });
 
     it('should throw BadRequestException if weights length does not match sets', async () => {
@@ -298,7 +372,9 @@ describe('WorkoutsService', () => {
         ],
       };
 
-      i18nService.translate.mockResolvedValue('O número de pesos deve corresponder ao número de séries');
+      i18nService.translate.mockResolvedValue(
+        'O número de pesos deve corresponder ao número de séries',
+      );
 
       await expect(
         service.create('user-uuid', invalidDto, 'pt-BR'),
@@ -333,7 +409,11 @@ describe('WorkoutsService', () => {
       workoutRepository.findOne.mockResolvedValue(savedWorkout as any);
       i18nService.translate.mockResolvedValue('Treino salvo com sucesso');
 
-      const result = await service.create('user-uuid', createWorkoutDto, 'pt-BR');
+      const result = await service.create(
+        'user-uuid',
+        createWorkoutDto,
+        'pt-BR',
+      );
 
       expect(result.totalVolume).toBe(62);
     });
@@ -368,7 +448,14 @@ describe('WorkoutsService', () => {
         mockQueryBuilder as any,
       );
 
-      const result = await service.findAll('user-uuid', 1, 20, undefined, undefined, 'pt-BR');
+      const result = await service.findAll(
+        'user-uuid',
+        1,
+        20,
+        undefined,
+        undefined,
+        'pt-BR',
+      );
 
       expect(result.workouts).toHaveLength(1);
       expect(result.pagination.page).toBe(1);
@@ -419,7 +506,11 @@ describe('WorkoutsService', () => {
 
       workoutRepository.findOne.mockResolvedValue(workoutWithRelations as any);
 
-      const result = await service.findOne('workout-uuid', 'user-uuid', 'pt-BR');
+      const result = await service.findOne(
+        'workout-uuid',
+        'user-uuid',
+        'pt-BR',
+      );
 
       expect(result).toBeDefined();
       expect(result.id).toBe('workout-uuid');
@@ -450,8 +541,12 @@ describe('WorkoutsService', () => {
         userId: 'different-user-uuid',
       };
 
-      workoutRepository.findOne.mockResolvedValue(workoutWithDifferentUser as any);
-      i18nService.translate.mockResolvedValue('Você não tem permissão para acessar este treino');
+      workoutRepository.findOne.mockResolvedValue(
+        workoutWithDifferentUser as any,
+      );
+      i18nService.translate.mockResolvedValue(
+        'Você não tem permissão para acessar este treino',
+      );
 
       await expect(
         service.findOne('workout-uuid', 'user-uuid', 'pt-BR'),
@@ -473,7 +568,11 @@ describe('WorkoutsService', () => {
         sentAt: new Date(),
       } as any);
 
-      const result = await service.sendToTrainer('workout-uuid', 'user-uuid', 'pt-BR');
+      const result = await service.sendToTrainer(
+        'workout-uuid',
+        'user-uuid',
+        'pt-BR',
+      );
 
       expect(result.sentToTrainer).toBe(true);
       expect(result.sentAt).toBeDefined();
@@ -495,8 +594,12 @@ describe('WorkoutsService', () => {
         userId: 'different-user-uuid',
       };
 
-      workoutRepository.findOne.mockResolvedValue(workoutWithDifferentUser as any);
-      i18nService.translate.mockResolvedValue('Você não tem permissão para acessar este treino');
+      workoutRepository.findOne.mockResolvedValue(
+        workoutWithDifferentUser as any,
+      );
+      i18nService.translate.mockResolvedValue(
+        'Você não tem permissão para acessar este treino',
+      );
 
       await expect(
         service.sendToTrainer('workout-uuid', 'user-uuid', 'pt-BR'),
@@ -504,4 +607,3 @@ describe('WorkoutsService', () => {
     });
   });
 });
-

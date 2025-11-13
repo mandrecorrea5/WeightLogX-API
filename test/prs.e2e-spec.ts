@@ -14,14 +14,12 @@ describe('PRs (e2e)', () => {
     testEmail = `prs-test-${Date.now()}@example.com`;
     const password = 'Test123!@#';
 
-    await request(app.getHttpServer())
-      .post('/api/auth/register')
-      .send({
-        email: testEmail,
-        password,
-        confirmPassword: password,
-        fullName: 'PRs Test User',
-      });
+    await request(app.getHttpServer()).post('/api/auth/register').send({
+      email: testEmail,
+      password,
+      confirmPassword: password,
+      fullName: 'PRs Test User',
+    });
 
     const loginResponse = await request(app.getHttpServer())
       .post('/api/auth/login')
@@ -99,4 +97,3 @@ describe('PRs (e2e)', () => {
     });
   });
 });
-

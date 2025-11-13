@@ -8,7 +8,7 @@ import { I18nService } from 'nestjs-i18n';
 
 @Injectable()
 export class ImageValidationPipe implements PipeTransform {
-  constructor(private readonly i18n: I18nService) { }
+  constructor(private readonly i18n: I18nService) {}
 
   async transform(
     value: Express.Multer.File,
@@ -45,4 +45,3 @@ export class ImageValidationPipe implements PipeTransform {
     return value;
   }
 }
-

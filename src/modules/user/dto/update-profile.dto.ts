@@ -13,7 +13,8 @@ export class UpdateProfileDto {
   fullName?: string;
 
   @ApiProperty({
-    description: 'Data de nascimento (aceita ISO 8601: YYYY-MM-DD ou YYYY-MM-DDTHH:mm:ss.sssZ, ou formato brasileiro: dd/MM/yyyy)',
+    description:
+      'Data de nascimento (aceita ISO 8601: YYYY-MM-DD ou YYYY-MM-DDTHH:mm:ss.sssZ, ou formato brasileiro: dd/MM/yyyy)',
     example: '1990-03-15',
     required: false,
   })
@@ -22,7 +23,8 @@ export class UpdateProfileDto {
   birthDate?: string;
 
   @ApiProperty({
-    description: 'Telefone (aceita vários formatos: apenas números, com parênteses, com hífen, etc.)',
+    description:
+      'Telefone (aceita vários formatos: apenas números, com parênteses, com hífen, etc.)',
     example: '31987654321',
     required: false,
   })
@@ -40,7 +42,8 @@ export class UpdateProfileDto {
   trainingCenter?: string;
 
   @ApiProperty({
-    description: 'ID do centro de treinamento associado ao usuário (enviar null para remover)',
+    description:
+      'ID do centro de treinamento associado ao usuário (enviar null para remover)',
     example: 'a9c34a9c-1234-5678-9012-abcdef123456',
     required: false,
     nullable: true,
@@ -49,4 +52,3 @@ export class UpdateProfileDto {
   @IsUUID('4', { message: 'validation.uuid' })
   trainingCenterId?: string | null;
 }
-

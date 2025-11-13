@@ -1,6 +1,13 @@
-import { MigrationInterface, QueryRunner, TableColumn, TableForeignKey } from 'typeorm';
+import {
+  MigrationInterface,
+  QueryRunner,
+  TableColumn,
+  TableForeignKey,
+} from 'typeorm';
 
-export class UpdateUsersWithRoleRelation1700000000007 implements MigrationInterface {
+export class UpdateUsersWithRoleRelation1700000000007
+  implements MigrationInterface
+{
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Get the default 'atleta' role ID
     const atletaRole = await queryRunner.query(`
@@ -8,7 +15,9 @@ export class UpdateUsersWithRoleRelation1700000000007 implements MigrationInterf
     `);
 
     if (atletaRole.length === 0) {
-      throw new Error('Role "atleta" not found. Please run CreateRoles migration first.');
+      throw new Error(
+        'Role "atleta" not found. Please run CreateRoles migration first.',
+      );
     }
 
     const atletaRoleId = atletaRole[0].id;
@@ -24,9 +33,12 @@ export class UpdateUsersWithRoleRelation1700000000007 implements MigrationInterf
     );
 
     // Update all existing users to have 'atleta' role
-    await queryRunner.query(`
+    await queryRunner.query(
+      `
       UPDATE users SET role_id = $1 WHERE role_id IS NULL
-    `, [atletaRoleId]);
+    `,
+      [atletaRoleId],
+    );
 
     // Make role_id NOT NULL after updating existing rows
     await queryRunner.query(`
@@ -91,4 +103,3 @@ export class UpdateUsersWithRoleRelation1700000000007 implements MigrationInterf
     await queryRunner.dropColumn('users', 'role_id');
   }
 }
-

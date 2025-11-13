@@ -20,5 +20,3 @@ export class TrainerEntity {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }
-
-

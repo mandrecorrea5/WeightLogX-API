@@ -87,4 +87,3 @@ export class UpdateTrainingCenterDto {
   @IsString()
   country?: string;
 }
-

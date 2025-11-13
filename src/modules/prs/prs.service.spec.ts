@@ -7,6 +7,7 @@ import { PersonalRecordEntity } from './entities/personal-record.entity';
 import { WorkoutEntity } from '../workouts/entities/workout.entity';
 import { WorkoutExerciseEntity } from '../workouts/entities/workout-exercise.entity';
 import { SeriesConfigEntity } from '../workouts/entities/series-config.entity';
+import { NotificationsService } from '../notifications/notifications.service';
 
 describe('PrsService', () => {
   let service: PrsService;
@@ -77,8 +78,20 @@ describe('PrsService', () => {
       findOne: jest.fn(),
     };
 
+    const mockWorkoutExerciseRepository = {
+      find: jest.fn(),
+    };
+
+    const mockSeriesConfigRepository = {
+      find: jest.fn(),
+    };
+
     const mockI18nService = {
       translate: jest.fn(),
+    };
+
+    const mockNotificationsService = {
+      sendPRNotification: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -93,8 +106,20 @@ describe('PrsService', () => {
           useValue: mockWorkoutRepository,
         },
         {
+          provide: getRepositoryToken(WorkoutExerciseEntity),
+          useValue: mockWorkoutExerciseRepository,
+        },
+        {
+          provide: getRepositoryToken(SeriesConfigEntity),
+          useValue: mockSeriesConfigRepository,
+        },
+        {
           provide: I18nService,
           useValue: mockI18nService,
+        },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
         },
       ],
     }).compile();
@@ -277,7 +302,12 @@ describe('PrsService', () => {
 
       workoutRepository.findOne.mockResolvedValue(workoutWithExercise as any);
 
-      const result = await service.findAll('user-uuid', undefined, false, 'pt-BR');
+      const result = await service.findAll(
+        'user-uuid',
+        undefined,
+        false,
+        'pt-BR',
+      );
 
       expect(result.prs).toHaveLength(1);
       expect(result.prs[0].exerciseId).toBe('1');
@@ -361,7 +391,10 @@ describe('PrsService', () => {
 
       await service.findAll('user-uuid', undefined, false, 'pt-BR');
 
-      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('pr.maxWeight', 'DESC');
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'pr.maxWeight',
+        'DESC',
+      );
     });
 
     it('should handle empty PR list', async () => {
@@ -376,10 +409,14 @@ describe('PrsService', () => {
 
       prRepository.createQueryBuilder.mockReturnValue(mockQueryBuilder as any);
 
-      const result = await service.findAll('user-uuid', undefined, false, 'pt-BR');
+      const result = await service.findAll(
+        'user-uuid',
+        undefined,
+        false,
+        'pt-BR',
+      );
 
       expect(result.prs).toHaveLength(0);
     });
   });
 });
-

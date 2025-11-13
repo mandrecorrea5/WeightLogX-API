@@ -10,6 +10,11 @@ import {
 import { RoleEntity } from './role.entity';
 import { TrainingCenterEntity } from '../../modules/training-centers/entities/training-center.entity';
 
+export enum UserStatus {
+  PENDING = 'pending',
+  ACTIVE = 'active',
+}
+
 @Entity('users')
 export class UserEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -34,8 +39,15 @@ export class UserEntity {
   @Column({ name: 'birth_date', type: 'date', nullable: true })
   birthDate: Date | null;
 
-  @Column({ nullable: true, type: 'varchar' })
+  @Column({ nullable: true, type: 'varchar', unique: true })
   phone: string | null;
+
+  @Column({
+    type: 'enum',
+    enum: UserStatus,
+    default: UserStatus.ACTIVE,
+  })
+  status: UserStatus;
 
   @Column({ name: 'training_center_name', nullable: true, type: 'varchar' })
   trainingCenterName: string | null;
@@ -43,7 +55,10 @@ export class UserEntity {
   @Column({ name: 'training_center_id', type: 'uuid', nullable: true })
   trainingCenterId: string | null;
 
-  @ManyToOne(() => TrainingCenterEntity, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => TrainingCenterEntity, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   @JoinColumn({ name: 'training_center_id' })
   trainingCenter?: TrainingCenterEntity | null;
 
@@ -64,4 +79,3 @@ export class UserEntity {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }
-

@@ -7,7 +7,9 @@ import {
   TableIndex,
 } from 'typeorm';
 
-export class AddTrainersAndAbbreviation1700000000010 implements MigrationInterface {
+export class AddTrainersAndAbbreviation1700000000010
+  implements MigrationInterface
+{
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.createTable(
       new Table({
@@ -109,19 +111,22 @@ export class AddTrainersAndAbbreviation1700000000010 implements MigrationInterfa
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     const table = await queryRunner.getTable('training_centers');
-    const foreignKey = table?.foreignKeys.find((fk) => fk.columnNames.includes('trainer_id'));
+    const foreignKey = table?.foreignKeys.find((fk) =>
+      fk.columnNames.includes('trainer_id'),
+    );
     if (foreignKey) {
       await queryRunner.dropForeignKey('training_centers', foreignKey);
     }
 
     await queryRunner.dropColumn('training_centers', 'trainer_id');
 
-    await queryRunner.dropIndex('training_centers', 'IDX_training_centers_abbreviation');
+    await queryRunner.dropIndex(
+      'training_centers',
+      'IDX_training_centers_abbreviation',
+    );
     await queryRunner.dropColumn('training_centers', 'abbreviation');
 
     await queryRunner.dropIndex('trainers', 'IDX_trainers_name');
     await queryRunner.dropTable('trainers');
   }
 }
-
-

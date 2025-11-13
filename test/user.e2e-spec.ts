@@ -14,14 +14,12 @@ describe('User (e2e)', () => {
     testEmail = `user-test-${Date.now()}@example.com`;
     const password = 'Test123!@#';
 
-    await request(app.getHttpServer())
-      .post('/api/auth/register')
-      .send({
-        email: testEmail,
-        password,
-        confirmPassword: password,
-        fullName: 'E2E Test User',
-      });
+    await request(app.getHttpServer()).post('/api/auth/register').send({
+      email: testEmail,
+      password,
+      confirmPassword: password,
+      fullName: 'E2E Test User',
+    });
 
     const loginResponse = await request(app.getHttpServer())
       .post('/api/auth/login')
@@ -52,9 +50,7 @@ describe('User (e2e)', () => {
     }, 10000); // Increase timeout for this test
 
     it('should fail without authentication', () => {
-      return request(app.getHttpServer())
-        .get('/api/user/profile')
-        .expect(401);
+      return request(app.getHttpServer()).get('/api/user/profile').expect(401);
     });
   });
 
@@ -137,4 +133,3 @@ describe('User (e2e)', () => {
     });
   });
 });
-

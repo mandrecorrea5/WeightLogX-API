@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class CreateNotifications1700000000008 implements MigrationInterface {
-  name = 'CreateNotifications1700000000008'
+  name = 'CreateNotifications1700000000008';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
@@ -18,10 +18,18 @@ export class CreateNotifications1700000000008 implements MigrationInterface {
         updated_at TIMESTAMP DEFAULT NOW()
       );
     `);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(user_id, read);`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC);`);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_notifications_type ON notifications(type);`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(user_id, read);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC);`,
+    );
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_notifications_type ON notifications(type);`,
+    );
 
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS notification_settings (
@@ -49,7 +57,9 @@ export class CreateNotifications1700000000008 implements MigrationInterface {
         UNIQUE(user_id, device_token)
       );
     `);
-    await queryRunner.query(`CREATE INDEX IF NOT EXISTS idx_device_tokens_user_id ON device_tokens(user_id);`);
+    await queryRunner.query(
+      `CREATE INDEX IF NOT EXISTS idx_device_tokens_user_id ON device_tokens(user_id);`,
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
@@ -57,7 +67,9 @@ export class CreateNotifications1700000000008 implements MigrationInterface {
     await queryRunner.query(`DROP TABLE IF EXISTS device_tokens;`);
     await queryRunner.query(`DROP TABLE IF EXISTS notification_settings;`);
     await queryRunner.query(`DROP INDEX IF EXISTS idx_notifications_type;`);
-    await queryRunner.query(`DROP INDEX IF EXISTS idx_notifications_created_at;`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS idx_notifications_created_at;`,
+    );
     await queryRunner.query(`DROP INDEX IF EXISTS idx_notifications_read;`);
     await queryRunner.query(`DROP INDEX IF EXISTS idx_notifications_user_id;`);
     await queryRunner.query(`DROP TABLE IF EXISTS notifications;`);

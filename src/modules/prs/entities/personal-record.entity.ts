@@ -44,4 +44,3 @@ export class PersonalRecordEntity {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }
-

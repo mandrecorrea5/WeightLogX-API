@@ -43,7 +43,9 @@ export class NotificationsCronService {
         const settings = await this.settingsRepo
           .createQueryBuilder('s')
           .where('s.workoutReminders = TRUE')
-          .andWhere('to_char(s.workoutReminderTime, \"HH24:MI\") = :hm', { hm: `${hour}:${minute}` })
+          .andWhere('to_char(s.workoutReminderTime, \"HH24:MI\") = :hm', {
+            hm: `${hour}:${minute}`,
+          })
           .getMany();
 
         if (settings.length === 0) return;
@@ -64,7 +66,7 @@ export class NotificationsCronService {
           });
         }
       } catch (error) {
-        this.logger.error('Erro no cron de lembretes', error as any);
+        this.logger.error('Erro no cron de lembretes', error);
       }
     });
   }
@@ -85,7 +87,9 @@ export class NotificationsCronService {
           const recentCount = await this.workoutRepo
             .createQueryBuilder('w')
             .where('w.user_id = :userId', { userId: athlete.id })
-            .andWhere('w.date >= CURRENT_DATE - INTERVAL :days', { days: `${days} days` })
+            .andWhere('w.date >= CURRENT_DATE - INTERVAL :days', {
+              days: `${days} days`,
+            })
             .getCount();
 
           if (recentCount > 0) continue; // Teve treino nos últimos N dias
@@ -100,7 +104,7 @@ export class NotificationsCronService {
           });
         }
       } catch (error) {
-        this.logger.error('Erro no cron de inatividade', error as any);
+        this.logger.error('Erro no cron de inatividade', error);
       }
     });
   }

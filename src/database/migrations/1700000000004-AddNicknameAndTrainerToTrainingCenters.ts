@@ -1,6 +1,13 @@
-import { MigrationInterface, QueryRunner, TableColumn, TableIndex } from 'typeorm';
+import {
+  MigrationInterface,
+  QueryRunner,
+  TableColumn,
+  TableIndex,
+} from 'typeorm';
 
-export class AddNicknameAndTrainerToTrainingCenters1700000000004 implements MigrationInterface {
+export class AddNicknameAndTrainerToTrainingCenters1700000000004
+  implements MigrationInterface
+{
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Add nickname column
     await queryRunner.addColumn(
@@ -56,4 +63,3 @@ export class AddNicknameAndTrainerToTrainingCenters1700000000004 implements Migr
     await queryRunner.dropColumn('training_centers', 'nickname');
   }
 }
-

@@ -8,12 +8,20 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { UserEntity } from '../../database/entities/user.entity';
 import { RoleEntity } from '../../database/entities/role.entity';
-import { PasswordResetTokenEntity } from './entities/password-reset-token.entity';
 import { I18nModule } from '../../i18n/i18n.module';
+import { RegistrationVerificationEntity } from './entities/registration-verification.entity';
+import { RegistrationVerificationService } from './registration-verification.service';
+import { PasswordResetVerificationEntity } from './entities/password-reset-verification.entity';
+import { PasswordResetVerificationService } from './password-reset-verification.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserEntity, RoleEntity, PasswordResetTokenEntity]),
+    TypeOrmModule.forFeature([
+      UserEntity,
+      RoleEntity,
+      RegistrationVerificationEntity,
+      PasswordResetVerificationEntity,
+    ]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -37,8 +45,12 @@ import { I18nModule } from '../../i18n/i18n.module';
     I18nModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    RegistrationVerificationService,
+    PasswordResetVerificationService,
+  ],
   exports: [AuthService, JwtStrategy, PassportModule],
 })
-export class AuthModule { }
-
+export class AuthModule {}

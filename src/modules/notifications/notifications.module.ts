@@ -24,7 +24,11 @@ import { UserEntity } from '../../database/entities/user.entity';
     JwtModule.register({}),
   ],
   controllers: [NotificationsController, DeviceTokensController],
-  providers: [NotificationsService, NotificationsGateway, NotificationsCronService],
+  providers: [
+    NotificationsService,
+    NotificationsGateway,
+    NotificationsCronService,
+  ],
   exports: [NotificationsService, NotificationsGateway],
 })
-export class NotificationsModule { }
+export class NotificationsModule {}

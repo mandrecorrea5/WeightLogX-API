@@ -1,4 +1,10 @@
-import { IsString, IsNumber, IsBoolean, IsDateString, IsArray } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsBoolean,
+  IsDateString,
+  IsArray,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CompletedExerciseDto {
@@ -53,4 +59,3 @@ export class WorkoutResponseDto {
   @IsBoolean()
   sentToTrainer: boolean;
 }
-

@@ -29,7 +29,7 @@ import { ExerciseListResponseDto } from './dto/exercise-list-response.dto';
 @ApiBearerAuth('JWT-auth')
 @Controller('exercises')
 export class ExercisesController {
-  constructor(private readonly exercisesService: ExercisesService) { }
+  constructor(private readonly exercisesService: ExercisesService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -134,4 +134,3 @@ export class ExercisesController {
     return this.exercisesService.remove(id, locale);
   }
 }
-

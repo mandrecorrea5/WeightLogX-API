@@ -65,4 +65,3 @@ describe('JwtAuthGuard', () => {
     // Note: super.canActivate is called, but we can't easily test it without mocking Passport
   });
 });
-

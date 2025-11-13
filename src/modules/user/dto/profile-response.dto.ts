@@ -89,4 +89,3 @@ export class ProfileResponseDto {
   })
   profileImage: string | null;
 }
-

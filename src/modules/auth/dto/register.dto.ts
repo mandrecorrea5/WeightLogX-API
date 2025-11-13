@@ -1,9 +1,6 @@
-import {
-  IsEmail,
-  IsString,
-  MinLength,
-} from 'class-validator';
+import { IsEmail, IsEnum, IsString, Matches, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { VerificationMethod } from '../enums/verification-method.enum';
 
 export class RegisterDto {
   @ApiProperty({
@@ -23,6 +20,31 @@ export class RegisterDto {
   email: string;
 
   @ApiProperty({
+    description: 'Telefone do usuário (apenas dígitos)',
+    example: '11987654321',
+    minLength: 10,
+    maxLength: 15,
+  })
+  @IsString()
+  @Matches(/^\d{10,15}$/)
+  phone: string;
+
+  @ApiProperty({
+    description: 'Data de nascimento no formato YYYY-MM-DD',
+    example: '1990-05-17',
+  })
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  birthDate: string;
+
+  @ApiProperty({
+    description: 'Método de verificação para a conta',
+    enum: VerificationMethod,
+    example: VerificationMethod.EMAIL,
+  })
+  @IsEnum(VerificationMethod)
+  verificationMethod: VerificationMethod;
+
+  @ApiProperty({
     description: 'Senha do usuário',
     example: 'senha123456',
     minLength: 8,
@@ -40,4 +62,3 @@ export class RegisterDto {
   @MinLength(8)
   confirmPassword: string;
 }
-

@@ -43,4 +43,3 @@ export class SeriesConfigEntity {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }
-

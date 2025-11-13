@@ -45,4 +45,3 @@ export class CreateWorkoutResponseDto {
   @IsString()
   message: string;
 }
-

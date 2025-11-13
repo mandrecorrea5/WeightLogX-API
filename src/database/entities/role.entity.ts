@@ -28,4 +28,3 @@ export class RoleEntity {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 }
-

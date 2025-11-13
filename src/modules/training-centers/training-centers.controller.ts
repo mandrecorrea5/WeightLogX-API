@@ -30,7 +30,7 @@ import { TrainingCenterListResponseDto } from './dto/training-center-list-respon
 export class TrainingCentersController {
   constructor(
     private readonly trainingCentersService: TrainingCentersService,
-  ) { }
+  ) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -82,7 +82,10 @@ export class TrainingCentersController {
     description: 'Centro de treinamento encontrado',
     type: TrainingCenterResponseDto,
   })
-  @ApiResponse({ status: 404, description: 'Centro de treinamento não encontrado' })
+  @ApiResponse({
+    status: 404,
+    description: 'Centro de treinamento não encontrado',
+  })
   @ApiBearerAuth('JWT-auth')
   async findOne(
     @Param('id') id: string,
@@ -101,7 +104,10 @@ export class TrainingCentersController {
     description: 'Centro de treinamento atualizado com sucesso',
     type: TrainingCenterResponseDto,
   })
-  @ApiResponse({ status: 404, description: 'Centro de treinamento não encontrado' })
+  @ApiResponse({
+    status: 404,
+    description: 'Centro de treinamento não encontrado',
+  })
   @ApiResponse({ status: 409, description: 'Nome já existe' })
   @ApiBearerAuth('JWT-auth')
   async update(
@@ -109,7 +115,11 @@ export class TrainingCentersController {
     @Body() updateTrainingCenterDto: UpdateTrainingCenterDto,
     @I18nLang() locale: string,
   ): Promise<TrainingCenterResponseDto> {
-    return this.trainingCentersService.update(id, updateTrainingCenterDto, locale);
+    return this.trainingCentersService.update(
+      id,
+      updateTrainingCenterDto,
+      locale,
+    );
   }
 
   @Delete(':id')
@@ -120,8 +130,14 @@ export class TrainingCentersController {
     status: 200,
     description: 'Centro de treinamento removido com sucesso',
   })
-  @ApiResponse({ status: 404, description: 'Centro de treinamento não encontrado' })
-  @ApiResponse({ status: 400, description: 'Centro de treinamento possui usuários associados' })
+  @ApiResponse({
+    status: 404,
+    description: 'Centro de treinamento não encontrado',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Centro de treinamento possui usuários associados',
+  })
   @ApiBearerAuth('JWT-auth')
   async remove(
     @Param('id') id: string,
@@ -130,4 +146,3 @@ export class TrainingCentersController {
     return this.trainingCentersService.remove(id, locale);
   }
 }
-

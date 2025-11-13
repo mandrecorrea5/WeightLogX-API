@@ -1,4 +1,10 @@
-import { MigrationInterface, QueryRunner, Table, TableForeignKey, TableIndex } from 'typeorm';
+import {
+  MigrationInterface,
+  QueryRunner,
+  Table,
+  TableForeignKey,
+  TableIndex,
+} from 'typeorm';
 
 export class InitialSchema1700000000000 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -375,7 +381,8 @@ export class InitialSchema1700000000000 implements MigrationInterface {
   public async down(queryRunner: QueryRunner): Promise<void> {
     // Drop foreign keys first
     const workoutTable = await queryRunner.getTable('workouts');
-    const workoutExerciseTable = await queryRunner.getTable('workout_exercises');
+    const workoutExerciseTable =
+      await queryRunner.getTable('workout_exercises');
     const seriesConfigTable = await queryRunner.getTable('series_configs');
     const personalRecordTable = await queryRunner.getTable('personal_records');
 
@@ -421,4 +428,3 @@ export class InitialSchema1700000000000 implements MigrationInterface {
     await queryRunner.dropTable('users', true);
   }
 }
-

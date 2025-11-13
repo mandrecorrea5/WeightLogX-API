@@ -1,4 +1,10 @@
-import { MigrationInterface, QueryRunner, Table, TableForeignKey, TableIndex } from 'typeorm';
+import {
+  MigrationInterface,
+  QueryRunner,
+  Table,
+  TableForeignKey,
+  TableIndex,
+} from 'typeorm';
 
 export class AddPasswordResetTokens1700000000001 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -95,4 +101,3 @@ export class AddPasswordResetTokens1700000000001 implements MigrationInterface {
     await queryRunner.dropTable('password_reset_tokens', true);
   }
 }
-

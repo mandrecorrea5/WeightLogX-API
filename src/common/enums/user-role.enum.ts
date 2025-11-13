@@ -3,4 +3,3 @@ export enum UserRole {
   TRAINER = 'treinador',
   ADMIN = 'admin',
 }
-

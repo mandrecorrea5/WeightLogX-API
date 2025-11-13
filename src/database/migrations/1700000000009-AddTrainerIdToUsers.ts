@@ -1,4 +1,9 @@
-import { MigrationInterface, QueryRunner, TableColumn, TableForeignKey } from 'typeorm';
+import {
+  MigrationInterface,
+  QueryRunner,
+  TableColumn,
+  TableForeignKey,
+} from 'typeorm';
 
 export class AddTrainerIdToUsers1700000000009 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -24,7 +29,9 @@ export class AddTrainerIdToUsers1700000000009 implements MigrationInterface {
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     const table = await queryRunner.getTable('users');
-    const fk = table?.foreignKeys.find((f) => f.columnNames.includes('trainer_id'));
+    const fk = table?.foreignKeys.find((f) =>
+      f.columnNames.includes('trainer_id'),
+    );
     if (fk) {
       await queryRunner.dropForeignKey('users', fk);
     }

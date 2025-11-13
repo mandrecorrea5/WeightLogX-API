@@ -64,12 +64,16 @@ Convenções:
 - Todas as respostas seguem DTOs documentadas no Swagger.
 
 ### Auth (`/api/auth`)
-| Método | Caminho            | Autenticação | DTO de Entrada         | DTO de Saída            | Descrição |
-|--------|--------------------|--------------|------------------------|-------------------------|-----------|
-| POST   | `/register`        | Público      | `RegisterDto`          | `RegisterResponseDto`   | Cria novo usuário com role padrão `atleta`.
-| POST   | `/login`           | Público      | `LoginDto`             | `LoginResponseDto`      | Autentica usuário e retorna `access_token`.
-| POST   | `/forgot-password` | Público      | `ForgotPasswordDto`    | `{ message, token? }`   | Envia token de recuperação (retornado na resposta em dev).
-| POST   | `/reset-password`  | Público      | `ResetPasswordDto`     | `{ message }`           | Troca senha usando token válido.
+| Método | Caminho                | Autenticação | DTO de Entrada             | DTO de Saída                          | Descrição |
+|--------|------------------------|--------------|----------------------------|---------------------------------------|-----------|
+| POST   | `/register`            | Público      | `RegisterDto`              | `RegisterResponseDto`                 | Inicia registro pendente, envia código via email ou SMS.
+| POST   | `/register/resend-code`| Público      | `RegisterResendCodeDto`    | `{ message, verificationId, target, method }` | Reenvia código de verificação respeitando limites de segurança.
+| POST   | `/register/verify`     | Público      | `RegisterVerifyDto`        | `{ message }`                         | Confirma o código de verificação e ativa a conta.
+| POST   | `/login`               | Público      | `LoginDto`                 | `LoginResponseDto`                    | Autentica usuário confirmado e retorna `access_token`.
+| POST   | `/forgot-password`     | Público      | `ForgotPasswordDto`        | `{ message, verificationId, verificationMethod, target }` | Inicia recuperação de senha com código de verificação (email/SMS).
+| POST   | `/forgot-password/resend-code` | Público | `ForgotPasswordResendCodeDto` | `{ message, verificationId, target, method }` | Reenvia código de verificação (limite: 3 por hora).
+| POST   | `/forgot-password/verify` | Público | `ForgotPasswordVerifyDto` | `{ message }` | Valida código de verificação (obrigatório antes de reset-password).
+| POST   | `/reset-password`      | Público      | `ResetPasswordDto`         | `{ message }`                         | Redefine senha após validação do código (requer código verificado).
 
 ### User (`/api/user`)
 | Método | Caminho                           | Autenticação | DTO de Entrada                | DTO de Saída              | Descrição |
@@ -179,6 +183,7 @@ Principais entidades (TypeORM):
   - `config/jwt.config.ts`: secret, expiração padrão `7d`, refresh tokens.
   - `config/upload.config.ts`: diretório e limites de upload (`./uploads/profiles`, 5MB).
   - `config/tracing.config.ts`: opções de OpenTelemetry (endpoint OTLP, service name/version).
+- **Observabilidade Avançada**: PostHog opcional disponível no `docker-compose` (`posthog-web`, `posthog-worker`, `posthog-plugin-server` + dependências). Suba com `docker-compose up posthog-web posthog-worker posthog-plugin-server` para habilitar analytics de produto em `http://localhost:8000`.
 - **Uploads**: arquivos disponíveis em `/uploads/profiles`, servidos estáticamente (configuração em `main.ts`).
 - **Docker**: `docker-compose.yml` e `docker-compose.dev.yml` para ambiente completo, além de stack de observabilidade (Grafana/Loki/Promtail/Prometheus).
 - **Scripts NPM**: `start:dev`, `build`, `test`, `test:e2e`, `migration:*` (via TypeORM CLI).

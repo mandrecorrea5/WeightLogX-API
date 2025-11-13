@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  Query,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, Get, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -14,7 +8,11 @@ import {
 } from '@nestjs/swagger';
 import { I18nLang } from 'nestjs-i18n';
 import { ReportsService } from './reports.service';
-import { ReportsQueryDto, ReportType, TimeFilter } from './dto/reports-query.dto';
+import {
+  ReportsQueryDto,
+  ReportType,
+  TimeFilter,
+} from './dto/reports-query.dto';
 import { ReportsResponseDto } from './dto/reports-response.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UserEntity } from '../../database/entities/user.entity';
@@ -23,7 +21,7 @@ import { UserEntity } from '../../database/entities/user.entity';
 @Controller('reports')
 @ApiBearerAuth('JWT-auth')
 export class ReportsController {
-  constructor(private readonly reportsService: ReportsService) { }
+  constructor(private readonly reportsService: ReportsService) {}
 
   @Get()
   @HttpCode(HttpStatus.OK)
@@ -54,7 +52,8 @@ export class ReportsController {
   })
   @ApiResponse({
     status: 400,
-    description: 'Parâmetros inválidos (ex: exerciseId obrigatório para type=exercicio)',
+    description:
+      'Parâmetros inválidos (ex: exerciseId obrigatório para type=exercicio)',
   })
   async generateReport(
     @CurrentUser() user: UserEntity,
@@ -64,4 +63,3 @@ export class ReportsController {
     return this.reportsService.generateReport(user.id, query, locale);
   }
 }
-

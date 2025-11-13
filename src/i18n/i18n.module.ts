@@ -1,5 +1,9 @@
 import { Module } from '@nestjs/common';
-import { I18nModule as NestI18nModule, QueryResolver, AcceptLanguageResolver } from 'nestjs-i18n';
+import {
+  I18nModule as NestI18nModule,
+  QueryResolver,
+  AcceptLanguageResolver,
+} from 'nestjs-i18n';
 import * as path from 'path';
 
 @Module({
@@ -17,5 +21,4 @@ import * as path from 'path';
     }),
   ],
 })
-export class I18nModule { }
-
+export class I18nModule {}

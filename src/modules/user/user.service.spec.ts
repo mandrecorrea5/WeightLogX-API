@@ -48,6 +48,10 @@ describe('UserService', () => {
     findOne: jest.fn(),
   };
 
+  const mockRoleRepository = {
+    findOne: jest.fn(),
+  };
+
   const mockI18nService = {
     translate: jest.fn((key: string) => Promise.resolve(key)),
   };
@@ -63,6 +67,10 @@ describe('UserService', () => {
         {
           provide: getRepositoryToken(TrainingCenterEntity),
           useValue: mockTrainingCenterRepository,
+        },
+        {
+          provide: getRepositoryToken(RoleEntity),
+          useValue: mockRoleRepository,
         },
         {
           provide: I18nService,
@@ -147,7 +155,11 @@ describe('UserService', () => {
         .mockResolvedValueOnce(reloadedUser);
       mockUserRepository.save.mockResolvedValue(userToUpdate);
 
-      const result = await service.updateProfile('user-uuid', updateDto, 'pt-BR');
+      const result = await service.updateProfile(
+        'user-uuid',
+        updateDto,
+        'pt-BR',
+      );
 
       expect(result.birthDate).toBe('15/03/1990');
       expect(result.phone).toBe('31987654321');
@@ -222,7 +234,10 @@ describe('UserService', () => {
         changePasswordDto.currentPassword,
         'hashedPassword',
       );
-      expect(mockedBcrypt.hash).toHaveBeenCalledWith(changePasswordDto.newPassword, 10);
+      expect(mockedBcrypt.hash).toHaveBeenCalledWith(
+        changePasswordDto.newPassword,
+        10,
+      );
     });
 
     it('should throw UnauthorizedException if current password is incorrect', async () => {
@@ -278,7 +293,9 @@ describe('UserService', () => {
         ...userWithImage,
         profileImageUrl: null,
       });
-      mockI18nService.translate.mockResolvedValue('Imagem removida com sucesso');
+      mockI18nService.translate.mockResolvedValue(
+        'Imagem removida com sucesso',
+      );
 
       const result = await service.deleteProfileImage('user-uuid', 'pt-BR');
 
@@ -298,10 +315,22 @@ describe('UserService (trainer linkage)', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UserService,
-        { provide: getRepositoryToken(UserEntity), useValue: createRepoMock<UserEntity>() },
-        { provide: getRepositoryToken(RoleEntity), useValue: createRepoMock<RoleEntity>() },
-        { provide: getRepositoryToken(TrainingCenterEntity), useValue: createRepoMock<TrainingCenterEntity>() },
-        { provide: I18nService, useValue: { translate: jest.fn().mockResolvedValue('msg') } },
+        {
+          provide: getRepositoryToken(UserEntity),
+          useValue: createRepoMock<UserEntity>(),
+        },
+        {
+          provide: getRepositoryToken(RoleEntity),
+          useValue: createRepoMock<RoleEntity>(),
+        },
+        {
+          provide: getRepositoryToken(TrainingCenterEntity),
+          useValue: createRepoMock<TrainingCenterEntity>(),
+        },
+        {
+          provide: I18nService,
+          useValue: { translate: jest.fn().mockResolvedValue('msg') },
+        },
       ],
     }).compile();
 
@@ -312,32 +341,55 @@ describe('UserService (trainer linkage)', () => {
   });
 
   it('setTrainer should set trainerId when both users exist', async () => {
-    const athlete: Partial<UserEntity> = { id: 'athlete-1', fullName: 'Athlete', role: { name: 'atleta' } as any };
-    const trainer: Partial<UserEntity> = { id: 'trainer-1', fullName: 'Trainer', role: { name: 'treinador' } as any };
+    const athlete: Partial<UserEntity> = {
+      id: 'athlete-1',
+      fullName: 'Athlete',
+      role: { name: 'atleta' } as any,
+    };
+    const trainer: Partial<UserEntity> = {
+      id: 'trainer-1',
+      fullName: 'Trainer',
+      role: { name: 'treinador' } as any,
+    };
 
     userRepo.findOne
       .mockResolvedValueOnce(athlete as UserEntity) // athlete
       .mockResolvedValueOnce(trainer as UserEntity) // trainer
-      .mockResolvedValueOnce({ ...(athlete as any), trainerId: 'trainer-1' } as UserEntity); // reloaded
+      .mockResolvedValueOnce({
+        ...(athlete as any),
+        trainerId: 'trainer-1',
+      } as UserEntity); // reloaded
 
     userRepo.save.mockResolvedValue(athlete as UserEntity);
 
     const resp = await service.setTrainer('athlete-1', 'trainer-1');
-    expect(userRepo.save).toHaveBeenCalledWith(expect.objectContaining({ trainerId: 'trainer-1' }));
+    expect(userRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({ trainerId: 'trainer-1' }),
+    );
     expect(resp).toHaveProperty('id', 'athlete-1');
   });
 
   it('removeTrainer should null trainerId', async () => {
-    const athlete: Partial<UserEntity> = { id: 'athlete-1', fullName: 'Athlete', role: { name: 'atleta' } as any, trainerId: 'trainer-1' };
+    const athlete: Partial<UserEntity> = {
+      id: 'athlete-1',
+      fullName: 'Athlete',
+      role: { name: 'atleta' } as any,
+      trainerId: 'trainer-1',
+    };
 
     userRepo.findOne
       .mockResolvedValueOnce(athlete as UserEntity) // athlete
-      .mockResolvedValueOnce({ ...(athlete as any), trainerId: null } as UserEntity); // reloaded
+      .mockResolvedValueOnce({
+        ...(athlete as any),
+        trainerId: null,
+      } as UserEntity); // reloaded
 
     userRepo.save.mockResolvedValue(athlete as UserEntity);
 
     const resp = await service.removeTrainer('athlete-1');
-    expect(userRepo.save).toHaveBeenCalledWith(expect.objectContaining({ trainerId: null }));
+    expect(userRepo.save).toHaveBeenCalledWith(
+      expect.objectContaining({ trainerId: null }),
+    );
     expect(resp).toHaveProperty('id', 'athlete-1');
   });
 });
@@ -353,4 +405,3 @@ function createRepoMock<T>() {
     createQueryBuilder: jest.fn(),
   } as any;
 }
-

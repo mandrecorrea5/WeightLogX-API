@@ -48,8 +48,16 @@ async function bootstrap() {
           'http://localhost:5173',
         ]; // Development defaults
 
+  // Allow all origins if CORS_ORIGIN is set to "*" (temporary for development)
+  const corsOriginConfig =
+    corsOrigins.length === 1 && corsOrigins[0] === '*'
+      ? true // Allow all origins
+      : corsOrigins.length > 0
+        ? corsOrigins
+        : false; // Block all in production if not specified
+
   app.enableCors({
-    origin: corsOrigins.length > 0 ? corsOrigins : false,
+    origin: corsOriginConfig,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept-Language'],

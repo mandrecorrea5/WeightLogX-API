@@ -177,6 +177,32 @@ services:
       - prometheus
       - loki
 
+  # Nginx - Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: weightlogx_nginx
+    restart: unless-stopped
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/logs:/var/log/nginx
+      - ./nginx/certbot:/var/www/certbot:ro
+      - ./nginx/ssl:/etc/letsencrypt:ro
+    networks:
+      - weightlogx_network
+    depends_on:
+      - api
+      - grafana
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
 networks:
   weightlogx_network:
     driver: bridge

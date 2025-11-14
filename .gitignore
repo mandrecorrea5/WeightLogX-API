@@ -62,3 +62,8 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Uploads directory (será mapeado como volume)
 /uploads
+
+# Nginx logs and SSL certificates
+/nginx/logs
+/nginx/ssl
+/nginx/certbot

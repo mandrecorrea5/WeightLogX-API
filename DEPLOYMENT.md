@@ -104,6 +104,29 @@ O `docker-compose.yml` está configurado para carregar automaticamente o arquivo
    ```
 6. A API deve responder em `http://SEU_SERVIDOR:3000/api`. Use `/api/health` e `/api/metrics` para checks rápidos.
 
+## 5.1. Configurando Nginx (Opcional mas Recomendado)
+O Nginx está configurado como reverse proxy para facilitar o acesso e preparar para SSL/TLS.
+
+1. Adicione as variáveis do Nginx ao `.env.production`:
+   ```env
+   NGINX_HTTP_PORT=80
+   NGINX_HTTPS_PORT=443
+   ```
+
+2. Suba o container Nginx:
+   ```bash
+   docker compose up -d nginx
+   ```
+
+3. Após configurar, os serviços estarão acessíveis via Nginx:
+   - API: `http://SEU_SERVIDOR/api`
+   - Grafana: `http://SEU_SERVIDOR/grafana`
+   - Health: `http://SEU_SERVIDOR/health`
+
+4. Para configurar SSL/TLS, consulte `NGINX_SETUP.md`
+
+> **Nota:** As portas originais (3000, 3001, etc.) ainda estarão abertas. Para produção, considere fechar essas portas no firewall e usar apenas o Nginx.
+
 ## 6. Migrações do Banco de Dados
 Após a API estar rodando, execute as migrations no container `api`:
 ```bash

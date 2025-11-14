@@ -44,12 +44,20 @@ export function validateEnvironment(): void {
       );
     }
 
+    // Check for default/weak passwords
+    const weakPasswords = [
+      'password_segura',
+      'password',
+      '123456',
+      'admin',
+      '',
+    ];
     if (
-      process.env.DATABASE_PASSWORD === 'password_segura' ||
-      !process.env.DATABASE_PASSWORD
+      !process.env.DATABASE_PASSWORD ||
+      weakPasswords.includes(process.env.DATABASE_PASSWORD)
     ) {
       errors.push(
-        'DATABASE_PASSWORD must be changed from default value in production',
+        'DATABASE_PASSWORD must be changed from default/weak value in production. Please set a strong password in .env.production',
       );
     }
   }

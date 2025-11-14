@@ -34,9 +34,13 @@ export function validateEnvironment(): void {
       );
     }
 
-    if (process.env.CORS_ORIGIN === '*' || !process.env.CORS_ORIGIN) {
-      errors.push(
-        'CORS_ORIGIN must be specified and cannot be "*" in production',
+    if (!process.env.CORS_ORIGIN) {
+      errors.push('CORS_ORIGIN must be specified in production');
+    } else if (process.env.CORS_ORIGIN === '*') {
+      // Allow "*" temporarily while frontend doesn't have a domain
+      // TODO: Change to specific domain when frontend is deployed
+      console.warn(
+        '⚠️  WARNING: CORS_ORIGIN is set to "*" allowing all origins. This should be changed to a specific domain when the frontend is deployed.',
       );
     }
 

@@ -83,24 +83,26 @@ POSTHOG_ZOOKEEPER_PORT=2181
 ```
 > **Importante:** Ajuste `DATABASE_PASSWORD`, `JWT_SECRET`, `POSTHOG_SECRET_KEY` e demais segredos antes de subir em produção.
 
-Para o Docker Compose utilizar esse arquivo, rode os comandos com `--env-file .env.production` ou exporte as variáveis via shell (`source .env.production`).
+O `docker-compose.yml` está configurado para carregar automaticamente o arquivo `.env.production` via `env_file`, então não é necessário passar `--env-file` manualmente. Apenas certifique-se de que o arquivo `.env.production` está presente na raiz do projeto.
 
 ## 5. Primeiro Deploy (sem PostHog)
 1. No servidor, acesse a pasta do projeto
    ```bash
    cd /opt/apps/weightlogx-api
    ```
-2. Suba a stack principal (API + banco + observabilidade)
+2. Certifique-se de que o arquivo `.env.production` está presente na raiz do projeto
+3. Suba a stack principal (API + banco + observabilidade)
    ```bash
-   docker compose --env-file .env.production up -d db api
-   docker compose --env-file .env.production up -d prometheus loki promtail grafana
+   docker compose up -d db api
+   docker compose up -d prometheus loki promtail grafana
    ```
-3. Aguarde os containers ficarem saudáveis (`docker compose ps`)
-4. Verifique logs da API:
+   > **Nota:** O `docker-compose.yml` está configurado para carregar automaticamente o arquivo `.env.production` via `env_file`, então não é necessário passar `--env-file` manualmente.
+4. Aguarde os containers ficarem saudáveis (`docker compose ps`)
+5. Verifique logs da API:
    ```bash
    docker compose logs -f api
    ```
-5. A API deve responder em `http://SEU_SERVIDOR:3000/api`. Use `/api/health` e `/api/metrics` para checks rápidos.
+6. A API deve responder em `http://SEU_SERVIDOR:3000/api`. Use `/api/health` e `/api/metrics` para checks rápidos.
 
 ## 6. Migrações do Banco de Dados
 Após a API estar rodando, execute as migrations no container `api`:
@@ -142,7 +144,7 @@ Recomenda-se colocar um proxy reverso (Nginx, Caddy ou Traefik) em frente à API
   ```bash
   git pull origin main
   docker compose down
-  docker compose --env-file .env.production up -d --build
+  docker compose up -d --build
   docker compose exec api npm run migration:run
   ```
 - Logs:
